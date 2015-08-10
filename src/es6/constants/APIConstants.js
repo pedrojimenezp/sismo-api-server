@@ -1,0 +1,7 @@
+const APIConstants = {
+  MISSING_PARAMETERS : 'MISSING_PARAMETERS',
+  DATABASE_ERROR : 'DATABASE_ERROR',
+  LOGIN_SUCCESS : 'LOGIN_SUCCESS'
+}
+
+export default APIConstants;

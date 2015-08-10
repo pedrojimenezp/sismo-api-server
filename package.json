@@ -1,0 +1,32 @@
+{
+  "name": "sismo-api-server",
+  "version": "0.0.1",
+  "description": "API server for the SisMo platform",
+  "scripts": {
+    "babel": "babel -w src/es6/ --out-dir build/js/",
+    "nodemon": "nodemon build/js/server.js"
+  },
+  "repository": "",
+  "keywords": [],
+  "author": "Pedro Jimenez",
+  "license": "MIT",
+  "bugs": {},
+  "homepage": "",
+  "devDependencies": {
+    "babel": "^5.6.14"
+  },
+  "dependencies": {
+    "body-parser": "~1.12.4",
+    "co": "^4.6.0",
+    "cookie-parser": "~1.3.5",
+    "debug": "~2.2.0",
+    "express": "^4.12.4",
+    "jsonwebtoken": "^5.0.2",
+    "morgan": "~1.5.3",
+    "mosca": "^0.30.4",
+    "redis": "^0.12.1",
+    "rethinkdb": "^2.0.2",
+    "serve-favicon": "~2.2.1",
+    "swig": "^1.4.2"
+  }
+}
