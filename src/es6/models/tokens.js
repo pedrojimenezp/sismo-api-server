@@ -14,10 +14,12 @@ export function createAnAccessToken(connection, username, scopes) {
   let error;
   return new Promise((resolve, reject) => {
     if (connection && username && scopes) {
+      let tokenId = shortid.generate();
       let accessToken = jwt.sign({
+        id: tokenId,
         username: username,
         scopes: scopes
-      }, config.server.secret);
+      }, config.server.secret, {expiresInMinutes:10080});
       co(function*() {
         let refreshToken = shortid.generate();
         let result = yield r.db('sismo').table('tokens').insert({accessToken: accessToken, refreshToken: refreshToken}).run(connection);
@@ -39,11 +41,23 @@ export function createAnAccessToken(connection, username, scopes) {
   });
 }
 
-export function getTokenById(connection, key) {
+export function getTokenById(connection, id) {
   return new Promise((resolve, reject) => {
     const self = this;
     co(function*() {
-      let result = yield r.db('sismo').table('tokens').get(key).run(connection);
+      let result = yield r.db('sismo').table('tokens').get(id).run(connection);
+      resolve(result);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
+export function deleteTokenByAccessToken(connection, accessToken) {
+  return new Promise((resolve, reject) => {
+    const self = this;
+    co(function*() {
+      let result = yield r.db('sismo').table('tokens').filter({accessToken: accessToken}).delete().run(connection);
       resolve(result);
     }).catch((error) => {
       reject({type: APIConstants.DATABASE_ERROR, error: error});

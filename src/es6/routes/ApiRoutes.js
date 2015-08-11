@@ -29,7 +29,9 @@ export default class ApiRoutes {
     //urls for the api v1
 
     //post => /api/v1/session
+    this.app.post('/api/v1/sessions', (req, res) => this.sessionControllers.createSession(req, res));
     //delete => /api/v1/session
+    this.app.delete('/api/v1/sessions', (req, res) => this.sessionControllers.deleteSession(req, res));
 
     //post => /api/v1/users
     this.app.post('/api/v1/users', (req, res) => this.usersControllers.createAnUser(req, res));
@@ -56,7 +58,7 @@ export default class ApiRoutes {
 
 
 
-    this.app.post('/api/session', (req, res) => this.sessionControllers.createSession(req, res));
+
 
 
     //URL to get the MQTT token
