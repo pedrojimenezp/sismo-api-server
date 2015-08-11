@@ -27,6 +27,7 @@
     "redis": "^0.12.1",
     "rethinkdb": "^2.0.2",
     "serve-favicon": "~2.2.1",
+    "shortid": "^2.2.2",
     "swig": "^1.4.2"
   }
 }

@@ -26,20 +26,18 @@ export default class ApiRoutes {
       next();
     });
 
-    //Just a middleware
-    this.app.use((req, res, next) => {
-      console.log("I'm a middleware");
-      next();
-    });
-
     //urls for the api v1
 
     //post => /api/v1/session
     //delete => /api/v1/session
 
     //post => /api/v1/users
+    this.app.post('/api/v1/users', (req, res) => this.usersControllers.createAnUser(req, res));
+    //get => /api/v1/users
+    this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
 
     //get => /api/v1/users/:username
+    this.app.get('/api/v1/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
 
     //post => /api/v1/users/:username/motos
     //get => /api/v1/users/:username/motos
@@ -56,9 +54,7 @@ export default class ApiRoutes {
 
     this.app.get('/api/users', this._jwtVerification,(req, res) => this.usersControllers.getUsers(req, res));
 
-    this.app.post('/api/users', (req, res) => this.usersControllers.createAnUser(req, res));
 
-    this.app.get('/api/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
 
     this.app.post('/api/session', (req, res) => this.sessionControllers.createSession(req, res));
 

@@ -4,120 +4,79 @@ import r from 'rethinkdb';
 import APIConstants from '../constants/APIConstants';
 import co from 'co';
 import polyfill from 'babel/polyfill';
-
-//import APIEvents from '../events/APIEvents';
-import MQTTClient from '../MQTTClient';
-
+import jwt from 'jsonwebtoken';
+import config from '../config/config';
+import shortid  from 'shortid';
+import * as tokens from '../models/tokens';
+import * as users from '../models/users';
+import * as httpResponses from '../helpers/httpResponses';
 
 export default class UsersControllers {
   constructor(connection){
     this.connection = connection;
   }
 
-  getUsers(req, res) {
-    r.table('users').filter({}).run(this.connection, (error, result) => {
-      if (error) {
-        console.log(error);
-        res.send(error);
-      } else {
-        // console.log(result);
-        res.send(result._responses);
-      }
+  getAllUsers(req, res) {
+    let self = this;
+    co(function*() {
+      let response = yield users.getAllUsers(self.connection);
+      res.status(200).send(response);
+    }).catch((error) => {
+      console.log(error);
+      httpResponses.internalServerError(res);
     });
   }
 
   getUserByUsername(req, res) {
-    let filter = {
-      account: {
-        username: req.params.username
+    let self = this;
+    co(function*() {
+      let response = yield users.getUserByUsername(self.connection, req.params.username);
+      if(response.account) {
+        delete response.account.password;
       }
-    }
-    r.table('users').filter({account: {username: req.params.username}}).run(this.connection, (error, result) => {
-      if (error) {
-        console.log(error);
-        res.send(error);
-      } else {
-        console.log(result._responses);
-        res.send(result._responses);
-      }
+      res.status(200).send(response);
+    }).catch((error) => {
+      console.log(error);
+      httpResponses.internalServerError(res);
     });
   }
 
   createAnUser(req, res) {
-    if (req.body.username && req.body.email && req.body.password) {
+    let response;
+    if (req.body.username && req.body.password) {
       const self = this;
       co(function*() {
-        let emailAlreadyEsist = yield self._emailAlreadyExist(req.body.email);
-        if (emailAlreadyEsist) {
-          res.send('Email already exist, write another one');
+        let usernameAlreadyExist = yield users.usernameAlreadyExist(self.connection, req.body.username);
+        if (usernameAlreadyExist) {
+          response = {
+            code: "409",
+            type: APIConstants.CONFLICT,
+            error: "Username already exist"
+          };
+          res.status(409).send(response);
         } else {
-          let usernameAlreadyExist = yield self._usernameAlreadyExist(req.body.username);
-          if (usernameAlreadyExist) {
-            res.send('Username already exist, write another one');
-          } else {
-            const user = {
-              username: req.body.username,
-              email: req.body.email,
-              password: req.body.password
-            }
-            let result = yield self._insertUser(user);
-            MQTTClient.publish("APIEvents/NewUserRegistered", req.body.username);
-            res.sendStatus(201);
+          let result; //Result of any insert operation
+          result = yield users.insertUser(self.connection, req.body.username, req.body.password);
+          let userInserted = yield users.getUserById(self.connection, result.generated_keys[0]);
+          let username = userInserted.account.username;
+          delete userInserted.account.password;
+          let scopes = {};
+          result = yield tokens.createAnAccessToken(self.connection, username, scopes);
+          let tokenInserted = yield tokens.getTokenById(self.connection, result.generated_keys[0]);
+          response = {
+            code: 201,
+            userCreated: userInserted,
+            accessToken: tokenInserted.accessToken,
+            refreshToken: tokenInserted.refreshToken
           }
+          res.status(201).send(response);
         }
       }).catch((error) => {
-        res.send(error);
+        console.log(error);
+        httpResponses.internalServerError(res);
       });
     } else {
-      res.send('You must to pass an email and password');
+      httpResponses.internalServerError(res);
     }
-  }
-
-  _emailAlreadyExist(email) {
-    return new Promise((resolve, reject) => {
-      const self = this;
-      co(function*() {
-        let count = yield r.table('users').count((user) => {
-          return user('account')('email').eq(email);
-        }).run(self.connection);
-        count === 0 ? resolve(false) : resolve(true);
-      }).catch((error) => {
-        reject({code: APIConstants.DATABASE_ERROR, error});
-      });
-    });
-  }
-
-  _usernameAlreadyExist(username, callback) {
-    return new Promise((resolve, reject) => {
-      const self = this;
-      co(function*() {
-        let count = yield r.db('sismo').table('users').count(function(user) {
-          return user('account')('username').eq(username);
-        }).run(self.connection);
-        count === 0 ? resolve(false) : resolve(true);
-      }).catch((error) => {
-        reject({code: APIConstants.DATABASE_ERROR, error});
-      });
-    });
-  }
-
-  _insertUser({username, email, password}) {
-    return new Promise((resolve, reject) => {
-      if (username && email && password) {
-        const self = this;
-        co(function*() {
-          let result = yield r.db('sismo').table('users').insert({account: {username, email, password}}).run(self.connection);
-          resolve(result);
-        }).catch((error) => {
-          reject({code: APIConstants.DATABASE_ERROR, error});
-        });
-      } else {
-        const error = {
-          code: APIConstants.MISSING_PARAMETERS,
-          error: ""
-        };
-        reject(error);
-      }
-    });
   }
 }
