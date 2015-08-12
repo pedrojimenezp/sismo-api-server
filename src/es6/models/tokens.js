@@ -10,13 +10,14 @@ import shortid  from 'shortid';
 import debug from 'debug';
 
 
-export function createAnAccessToken(connection, username, scopes) {
+export function createAnAccessToken(connection, userId, username, scopes) {
   let error;
   return new Promise((resolve, reject) => {
-    if (connection && username && scopes) {
+    if (connection && userId && scopes) {
       let tokenId = shortid.generate();
       let accessToken = jwt.sign({
         id: tokenId,
+        userId: userId,
         username: username,
         scopes: scopes
       }, config.server.secret, {expiresInMinutes:10080});

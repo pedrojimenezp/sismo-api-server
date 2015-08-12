@@ -31,3 +31,6 @@ build/js/
 
 # Configuration files
 src/es6/config
+
+# Editors files
+.tern-project

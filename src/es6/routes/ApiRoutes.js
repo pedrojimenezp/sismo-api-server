@@ -5,6 +5,10 @@ import jwt from "jsonwebtoken";
 
 import UsersControllers from '../controllers/UsersControllers';
 import SessionControllers from '../controllers/SessionControllers';
+import config from '../config/config';
+import * as httpResponses from '../helpers/httpResponses';
+import APIConstants from '../constants/APIConstants';
+
 
 //import MQTTClient from '../MQTTClient';
 
@@ -36,16 +40,20 @@ export default class ApiRoutes {
     //post => /api/v1/users
     this.app.post('/api/v1/users', (req, res) => this.usersControllers.createAnUser(req, res));
     //get => /api/v1/users
-    this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
+    //this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
 
     //get => /api/v1/users/:username
     this.app.get('/api/v1/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
 
     //post => /api/v1/users/:username/motos
+    this.app.post('/api/v1/users/:username/motos', this._jwtVerification, (req, res) => this.usersControllers.addAnUserMoto(req, res));
     //get => /api/v1/users/:username/motos
+    this.app.get('/api/v1/users/:username/motos', this._jwtVerification, (req, res) => this.usersControllers.getAllUserMotos(req, res));
 
     //get => /api/v1/users/:username/motos/:motoId
+    this.app.get('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.getAnUserMoto(req, res));
     //update => /api/v1/users/:username/motos/:motoId
+    this.app.put('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.updateAnUserMoto(req, res));
     //delete => /api/v1/users/:username/motos/:motoId
 
     //get => /api/v1/tokens/mqtt
@@ -87,25 +95,50 @@ export default class ApiRoutes {
 
   //This method verify if the request has a accessToken header, and then try to verify if the Json Web Token (JWT) is valid, then pass to the next method
   _jwtVerification(req, res, next) {
-    //console.log(req.headers);
+    let response;
     if(req.headers['access-token']) {
       let accessToken = req.headers['access-token'];
-      jwt.verify(accessToken, 'secret', function(error, decode) {
+      jwt.verify(accessToken, config.server.secret, function(error, decode) {
         if(error) {
-          console.log(error);
-          res.send('Something bad just happened');
-        } else {
-          console.log(decode);
-          req.user = {
-            account: {
-              username: decode.username
+          if(error.name === "JsonWebTokenError"){
+            response = {
+              code: "400",
+              type: APIConstants.BAD_REQUEST,
+              error: "The access-token is invalild"
+            };
+            res.status(400).send(response);
+          } else if(error.name === "TokenExpiredError") {
+            response = {
+              code: "401",
+              type: APIConstants.UNAUTHORIZED,
+              error: "The access-token has expired"
             }
+            res.status(401).send(response);
+          } else{
+            httpResponses.internalServerError(res);
           }
-          next();
+        } else {
+          if(decode.username !== req.params.username) {
+            response = {
+              code: "401",
+              type: APIConstants.UNAUTHORIZED,
+              error: "The token is valid but isn't associated to this username"
+            }
+            res.status(401).send(response);
+          }else{
+            req.user = {
+              id: decode.userId,
+              account: {
+                username: decode.username
+              }
+            }
+            next();
+          }
+
         }
       });
     } else {
-      res.send('You have to pass a JWT in the authorization header');
+      res.send('You have to pass a JWT in the access-token header');
     }
   }
 

@@ -28,10 +28,11 @@ export default class SessionControllers {
       co(function*() {
         let user = yield users.getUserByUsername(self.connection, req.body.username);
         if (!helpers.isEmpty(user) && user.account.password === req.body.password) {
+          let userId = user.id;
           let username = user.account.username;
           delete user.account.password;
           let scopes = {};
-          result = yield tokens.createAnAccessToken(self.connection, username, scopes);
+          result = yield tokens.createAnAccessToken(self.connection, userId, username, scopes);
           let tokenInserted = yield tokens.getTokenById(self.connection, result.generated_keys[0]);
           response = {
             code: 201,
