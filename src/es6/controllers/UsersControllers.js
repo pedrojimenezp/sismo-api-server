@@ -263,6 +263,38 @@ export default class UsersControllers {
     });
   }
 
+  deleteAnUserMoto(req, res) {
+    let response;
+    let result;
+    let self = this;
+    co(function*() {
+      let filter = {
+        userId: req.user.id,
+        mac: req.params.mac
+      }
+      let moto = yield motos.getMotosByFilter(self.connection, filter);
+      if (helpers.isEmpty(moto)) {
+        response = {
+          code: "409",
+          type: APIConstants.CONFLICT,
+          error: "This mac isn't registered to this user, the operation can't be done"
+        };
+        res.status(409).send(response);
+      } else {
+        console.log("aqui");
+        result = yield motos.deleteMoto(self.connection, filter);
+        response = {
+          code: 200,
+          motoDeleted: moto
+        }
+        res.status(201).send(response);
+      }
+    }).catch((error) => {
+      console.log(error);
+      httpResponses.internalServerError(res);
+    });
+  }
+
   _hasThisMoto(motos, mac) {
     let hasIt = false;
     if(motos.length > 0){

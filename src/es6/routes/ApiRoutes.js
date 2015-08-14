@@ -55,6 +55,7 @@ export default class ApiRoutes {
     //update => /api/v1/users/:username/motos/:motoId
     this.app.put('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.updateAnUserMoto(req, res));
     //delete => /api/v1/users/:username/motos/:motoId
+    this.app.delete('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.deleteAnUserMoto(req, res));
 
     //get => /api/v1/tokens/mqtt
     //get => /api/v1/tokens/access

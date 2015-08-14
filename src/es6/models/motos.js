@@ -39,12 +39,9 @@ export function insertMoto(connection, moto) {
 }
 
 export function updateMoto(connection, filter, data) {
-  console.log("Aqui");
-  console.log(filter);
   return new Promise((resolve, reject) => {
     if (connection && filter && data) {
       co(function*() {
-        console.log(data);
         let result = yield r.db('sismo').table('motos').filter(filter).update(data).run(connection);
         resolve(result);
       }).catch((error) => {
@@ -54,6 +51,25 @@ export function updateMoto(connection, filter, data) {
       const error = {
         type: APIConstants.MISSING_PARAMETERS,
         error: "You need to pass a connection, filter and data as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+export function deleteMoto(connection, filter) {
+  return new Promise((resolve, reject) => {
+    if (connection && filter) {
+      co(function*() {
+        let result = yield r.db('sismo').table('motos').filter(filter).delete().run(connection);
+        resolve(result);
+      }).catch((error) => {
+        reject({type: APIConstants.DATABASE_ERROR, error: error});
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to pass a connection and filter as parameters"
       };
       reject(error);
     }
@@ -86,7 +102,6 @@ export function getMotosByUserId(connection, userId) {
 }
 
 export function getMotosByFilter(connection, filter) {
-  console.log(filter);
   return new Promise((resolve, reject) => {
     if (connection && filter) {
       co(function*() {
