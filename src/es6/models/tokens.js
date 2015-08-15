@@ -54,6 +54,34 @@ export function getTokenById(connection, id) {
   });
 }
 
+export function deleteTokenById(connection, id) {
+  return new Promise((resolve, reject) => {
+    const self = this;
+    co(function*() {
+      let result = yield r.db('sismo').table('tokens').get(id).delete().run(connection);
+      resolve(result);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
+export function getTokenByAccessToken(connection, accessToken) {
+  return new Promise((resolve, reject) => {
+    const self = this;
+    co(function*() {
+      let result = yield r.db('sismo').table('tokens').filter({accessToken: accessToken}).run(connection);
+      let response = {};
+      if(result._responses[0]){
+        response = result._responses[0].r[0];
+      }
+      resolve(response);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
 export function deleteTokenByAccessToken(connection, accessToken) {
   return new Promise((resolve, reject) => {
     const self = this;

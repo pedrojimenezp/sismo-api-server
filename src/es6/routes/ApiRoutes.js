@@ -46,34 +46,23 @@ export default class ApiRoutes {
     this.app.get('/api/v1/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
 
     //post => /api/v1/users/:username/motos
-    this.app.post('/api/v1/users/:username/motos', this._jwtVerification, (req, res) => this.usersControllers.addAnUserMoto(req, res));
+    this.app.post('/api/v1/users/:username/motos', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.addAnUserMoto(req, res));
     //get => /api/v1/users/:username/motos
-    this.app.get('/api/v1/users/:username/motos', this._jwtVerification, (req, res) => this.usersControllers.getAllUserMotos(req, res));
+    this.app.get('/api/v1/users/:username/motos', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.getAllUserMotos(req, res));
 
     //get => /api/v1/users/:username/motos/:motoId
-    this.app.get('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.getAnUserMoto(req, res));
+    this.app.get('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.getAnUserMoto(req, res));
     //update => /api/v1/users/:username/motos/:motoId
-    this.app.put('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.updateAnUserMoto(req, res));
+    this.app.put('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.updateAnUserMoto(req, res));
     //delete => /api/v1/users/:username/motos/:motoId
-    this.app.delete('/api/v1/users/:username/motos/:mac', this._jwtVerification, (req, res) => this.usersControllers.deleteAnUserMoto(req, res));
+    this.app.delete('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.deleteAnUserMoto(req, res));
 
-    //get => /api/v1/tokens/mqtt
-    //get => /api/v1/tokens/access
-    //get => /api/v1/tokens/refresh
-
+    //get => /api/v1/users/:username/tokens/mqtt
+    this.app.get('/api/v1/users/:username/tokens/mqtt', this._isAValidAndNotExpiredToken, (req, res) => this.sessionControllers.createMQTTToken(req, res));
+    //get => /api/v1/users/:username/tokens/access
+    this.app.get('/api/v1/users/:username/tokens/access', this._isAValidToken, (req, res) => this.sessionControllers.createAccessTokenFromRefreshToken(req, res));
     //this.app.get('/', (req, res) => this.usersControllers.index(req, res));
 
-    this.app.get('/api/users', this._jwtVerification,(req, res) => this.usersControllers.getUsers(req, res));
-
-
-
-
-
-
-    //URL to get the MQTT token
-    this.app.get('/api/mqtt-token', this._jwtVerification, (req, res) => this.sessionControllers.getMQTTToken(req, res));
-
-    //this.app.get('/api/tokens/')
     /*
     this.app.get('/api/users/:username/notifications', (req, res) => {
       let ns = [];
@@ -93,9 +82,54 @@ export default class ApiRoutes {
     })*/
   }
 
+  //This method verifies if the jwt is just valid
+  _isAValidToken(req, res, next){
+    let response;
+    if(req.headers['access-token']) {
+      let accessToken = req.headers['access-token'];
+      jwt.verify(accessToken, config.server.secret, function(error, decode) {
+        if(error && error.name !== "TokenExpiredError") {
+          if(error.name === "JsonWebTokenError"){
+            response = {
+              code: "400",
+              type: APIConstants.BAD_REQUEST,
+              error: "The access-token is invalild"
+            };
+            res.status(400).send(response);
+          } else{
+            httpResponses.internalServerError(res);
+          }
+        } else {
+          if(decode.username !== req.params.username) {
+            response = {
+              code: "401",
+              type: APIConstants.UNAUTHORIZED,
+              error: "The token is valid but isn't associated to this username"
+            }
+            res.status(401).send(response);
+          }else{
+            req.user = {
+              id: decode.userId,
+              account: {
+                username: decode.username
+              }
+            }
+            next();
+          }
+        }
+      });
+    } else {
+      response = {
+        code: "400",
+        type: APIConstants.BAD_REQUEST,
+        error: "You have to pass a JWT in the access-token header"
+      }
+      res.status(400).send(response);
+    }
+  }
 
-  //This method verify if the request has a accessToken header, and then try to verify if the Json Web Token (JWT) is valid, then pass to the next method
-  _jwtVerification(req, res, next) {
+  //his method verifies if the jwt is valid and also verifies if has not expired
+  _isAValidAndNotExpiredToken(req, res, next){
     let response;
     if(req.headers['access-token']) {
       let accessToken = req.headers['access-token'];
@@ -135,12 +169,15 @@ export default class ApiRoutes {
             }
             next();
           }
-
         }
       });
     } else {
-      res.send('You have to pass a JWT in the access-token header');
+      response = {
+        code: "400",
+        type: APIConstants.BAD_REQUEST,
+        error: "You have to pass a JWT in the access-token header"
+      }
+      res.status(400).send(response);
     }
   }
-
 }
