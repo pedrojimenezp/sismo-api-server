@@ -34,7 +34,10 @@ export default class SessionControllers {
           let userId = user.id;
           let username = user.account.username;
           delete user.account.password;
-          let scopes = {};
+          let scopes = {
+            me: ["get", "post", "put", "delete"],
+            others: ["get"]
+          };
           result = yield tokens.createAnAccessToken(self.connection, userId, username, scopes);
           let tokenInserted = yield tokens.getTokenById(self.connection, result.generated_keys[0]);
           response = {
@@ -43,25 +46,15 @@ export default class SessionControllers {
             accessToken: tokenInserted.accessToken,
             refreshToken: tokenInserted.refreshToken
           }
-          res.status(201).send(response);
+          res.status(response.code).send(response);
         } else {
-          response = {
-            code: "401",
-            type: APIConstants.UNAUTHORIZED,
-            error: "Incorrect username or password"
-          };
-          res.status(401).send(response);
+          httpResponses.unauthorized(res, "Incorrect username or password");
         }
       }).catch((error) => {
         httpResponses.internalServerError(res);
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You must to pass and username and password"
-      };
-      res.status(400).send(response);
+     httpResponses.badRequest(res, "You must to pass and username and password");
     }
   }
 
@@ -76,17 +69,12 @@ export default class SessionControllers {
           code: 200,
           type: APIConstants.LOGOUT_SUCCESS
         }
-        res.status(200).send(response);
+        res.status(response.code).send(response);
       }).catch((error) => {
         httpResponses.internalServerError(res);
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You must to pass an access token"
-      };
-      res.status(400).send(response);
+      httpResponses.badRequest(res, "You must to pass an access-token in the request header");
     }
   }
 
@@ -96,6 +84,7 @@ export default class SessionControllers {
       userId: req.user.id
     };
     let self = this;
+    let response;
     co(function*() {
       let userMotos = yield motos.getMotosByFilter(self.connection, filter);
       let subscribeChannelsAllowed = [`/apps/users/${username}`];
@@ -111,7 +100,11 @@ export default class SessionControllers {
         subscribeChannelsAllowed: subscribeChannelsAllowed,
         publishChannelsAllowed: publishChannelsAllowed,
       }, 'secret');
-      res.send({MQTTToken: MQTTToken});
+      response = {
+        code: 201,
+        MQTTToken: MQTTToken
+      }
+      res.status(response.code).send(response);
     }).catch((error) => {
       console.log(error);
       httpResponses.internalServerError(res);
@@ -125,10 +118,12 @@ export default class SessionControllers {
     if (req.headers['access-token'] && req.headers["refresh-token"]) {
       let accessToken = req.headers['access-token'];
       let refreshToken = req.headers['refresh-token'];
-
       let userId = req.user.id;
       let username = req.user.account.username;
-      let scopes = {};
+      let scopes = {
+        me: ["get", "post", "put", "delete"],
+        others: "get"
+      };
       co(function*() {
         let token = yield tokens.getTokenByAccessToken(self.connection, accessToken);
         if(!helpers.isEmpty(token)){
@@ -140,31 +135,16 @@ export default class SessionControllers {
             //console.log(result);
             res.send(newToken);
           }else{
-            response = {
-              code: "401",
-              type: APIConstants.UNAUTHORIZED,
-              error: "The refresh token is invalid"
-            }
-            res.status(401).send(response);
+            httpResponses.unauthorized(res, "The refresh token is invalid");
           }
         }else{
-          response = {
-            code: "401",
-            type: APIConstants.UNAUTHORIZED,
-            error: "The token hasn't registered in the db"
-          };
-          res.status(401).send(response);
+          httpResponses.unauthorized(res, "The token hasn't registered in the db");
         }
       }).catch((error) => {
         httpResponses.internalServerError(res);
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You must to pass an access-token and refresh-token in header of the request"
-      };
-      res.status(400).send(response);
+      httpResponses.badRequest(res, "You must to pass an access-token and refresh-token in header of the request");
     }
   }
 }

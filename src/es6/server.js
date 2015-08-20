@@ -73,8 +73,10 @@ r.connect(options)
   });
 })
 .catch((error) => {
-  console.log(`Error trying to connect to ${options.db} database rethinkdb on http://${options.localhost}:${options.port}.`);
   console.log(error);
+  if(error.name === 'RqlDriverError'){
+    console.log(`Error trying to connect to ${options.db} database rethinkdb on http://${options.localhost}:${options.port}.`);
+  }
 });
 
 

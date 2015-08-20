@@ -20,49 +20,69 @@ export default class UsersControllers {
 
   getAllUsers(req, res) {
     let self = this;
+    let result;
+    let response;
     co(function*() {
-      let response = yield users.getAllUsers(self.connection);
-      res.status(200).send(response);
+      result = yield users.getAllUsers(self.connection);
+      response = {
+        code: 200,
+        users: result
+      }
+      res.status(response.code).send(response);
     }).catch((error) => {
-      console.log(error);
       httpResponses.internalServerError(res);
     });
   }
 
   getUserByUsername(req, res) {
+    let response;
+    let result;
     let self = this;
     co(function*() {
-      let response = yield users.getUserByUsername(self.connection, req.params.username);
-      if(response.account) {
-        delete response.account.password;
+      let user = yield users.getUserByUsername(self.connection, req.params.username);
+      if (helpers.isEmpty(user)){
+        httpResponses.notFound(res, "Username not found");
+      } else{
+        if(user.account) {
+          delete user.account.password;
+        }
+        let filter = {
+          userId: user.id
+        }
+        let userMotos = yield motos.getMotosByFilter(self.connection, filter);
+        delete user.id;
+        user.motos = userMotos;
+        response = {
+          code: 200,
+          user: user
+        }
+        res.status(response.code).send(response);
       }
-      res.status(200).send(response);
     }).catch((error) => {
-      console.log(error);
       httpResponses.internalServerError(res);
     });
   }
 
   createAnUser(req, res) {
     let response;
+    let result;
     if (req.body.username && req.body.password) {
       const self = this;
       co(function*() {
         let usernameAlreadyExist = yield users.usernameAlreadyExist(self.connection, req.body.username);
         if (usernameAlreadyExist) {
-          response = {
-            code: "409",
-            type: APIConstants.CONFLICT,
-            error: "Username already exist"
-          };
-          res.status(409).send(response);
+          httpResponses.conflict(res, "Username already exist");
         } else {
-          let result; //Result of any insert operation
           result = yield users.insertUser(self.connection, req.body.username, req.body.password);
           let userInserted = yield users.getUserById(self.connection, result.generated_keys[0]);
           let username = userInserted.account.username;
           delete userInserted.account.password;
-          let scopes = {};
+          userInserted.profile = {};
+          userInserted.motos = [];
+          let scopes = {
+            me: ["get", "post", "put", "delete"],
+            others: ["get"]
+          };
           result = yield tokens.createAnAccessToken(self.connection, username, scopes);
           let tokenInserted = yield tokens.getTokenById(self.connection, result.generated_keys[0]);
           response = {
@@ -71,15 +91,56 @@ export default class UsersControllers {
             accessToken: tokenInserted.accessToken,
             refreshToken: tokenInserted.refreshToken
           }
-          res.status(201).send(response);
+          res.status(response.code).send(response);
         }
       }).catch((error) => {
-        console.log(error);
         httpResponses.internalServerError(res);
       });
     } else {
       httpResponses.internalServerError(res);
     }
+  }
+
+  updateUserProfile(req, res) {
+    let response;
+    let result;
+    let self = this;
+    co(function*() {
+      let user = yield users.getUserById(self.connection, req.user.id);
+      if (helpers.isEmpty(user)) {
+        httpResponses.notFound(res, "Username not found");
+      } else {
+        let profile = {};
+        if (user.profile) {
+          profile = user.profile;
+        }
+        if(req.body.name) {
+          profile.name = req.body.name;
+        }
+        if(req.body.age) {
+          profile.age = req.body.age;
+        }
+        if(req.body.sex) {
+          profile.sex = req.body.sex;
+        }
+        result = yield users.updateUserProfile(self.connection, req.user.id, profile);
+        let userUpdated = yield users.getUserById(self.connection, req.user.id);
+        let filter = {
+          userId: user.id
+        }
+        let userMotos = yield motos.getMotosByFilter(self.connection, filter);
+        delete userUpdated.account.password;
+        delete userUpdated.id;
+        userUpdated.motos = userMotos;
+        response = {
+          code: 200,
+          userUpdated: userUpdated
+        }
+        res.status(response.code).send(response);
+      }
+    }).catch((error) => {
+      httpResponses.internalServerError(res);
+    });
   }
 
   addAnUserMoto(req, res) {
@@ -92,14 +153,10 @@ export default class UsersControllers {
           userId: req.user.id,
           mac: req.body.mac
         }
-        let moto = yield motos.getMotosByFilter(self.connection, filter);
-        if (!helpers.isEmpty(moto)) {
-          response = {
-            code: "409",
-            type: APIConstants.CONFLICT,
-            error: "This mac is already registered to this user"
-          };
-          res.status(409).send(response);
+        let userMotos = yield motos.getMotosByFilter(self.connection, filter);
+        console.log(userMotos);
+        if (userMotos.length > 0) {
+          httpResponses.conflict(res, "This mac is already registered to this user");
         } else {
           let newMoto = {
             userId: req.user.id,
@@ -131,19 +188,13 @@ export default class UsersControllers {
             code: 201,
             motoAdded: motoInserted
           }
-          res.status(201).send(response);
+          res.status(response.code).send(response);
         }
       }).catch((error) => {
-        console.log(error);
         httpResponses.internalServerError(res);
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You must to pass at least the mac associated to the moto in the body of the request"
-      };
-      res.status(400).send(response);
+      httpResponses.badRequest(res, "You must to pass at least the mac associated to the moto in the body of the request");
     }
   }
 
@@ -178,14 +229,14 @@ export default class UsersControllers {
         code: 200,
         motos: userMotos
       }
-      res.status(201).send(response);
+      res.status(response.code).send(response);
     }).catch((error) => {
       console.log(error);
       httpResponses.internalServerError(res);
     });
   }
 
-  getAnUserMoto(req, res) {
+  getAnUserMotoByMac(req, res) {
     let response;
     let result;
     let self = this;
@@ -194,26 +245,23 @@ export default class UsersControllers {
       mac: req.params.mac
     };
     co(function*() {
-      let userMoto = yield motos.getMotosByFilter(self.connection, filter);
+      let userMoto = yield motos.getUserMotoByMac(self.connection, req.user.id, req.params.mac);
       if(helpers.isEmpty(userMoto)){
-        response = {
-          code: 200,
-          moto: {}
-        }
+        httpResponses.notFound(res, "Mac not found");
       }else{
         response = {
           code: 200,
-          moto: userMoto[0]
+          moto: userMoto
         }
+        res.status(response.code).send(response);
       }
-      res.status(200).send(response);
     }).catch((error) => {
       console.log(error);
       httpResponses.internalServerError(res);
     });
   }
 
-  updateAnUserMoto(req, res) {
+  updateAnUserMotoByMac(req, res) {
     let response;
     let result;
     let self = this;
@@ -224,12 +272,7 @@ export default class UsersControllers {
       }
       let moto = yield motos.getMotosByFilter(self.connection, filter);
       if (helpers.isEmpty(moto)) {
-        response = {
-          code: "409",
-          type: APIConstants.CONFLICT,
-          error: "This mac isn't registered to this user, the operation can't be done"
-        };
-        res.status(409).send(response);
+        httpResponses.notFound(res, "Mac not found");
       } else {
         moto = moto[0];
         if(req.body.placa) {
@@ -255,7 +298,7 @@ export default class UsersControllers {
           code: 200,
           motoUpdated: motoUpdated
         }
-        res.status(201).send(response);
+        res.status(response.code).send(response);
       }
     }).catch((error) => {
       console.log(error);
@@ -263,7 +306,7 @@ export default class UsersControllers {
     });
   }
 
-  deleteAnUserMoto(req, res) {
+  deleteAnUserMotoByMac(req, res) {
     let response;
     let result;
     let self = this;
@@ -274,39 +317,18 @@ export default class UsersControllers {
       }
       let moto = yield motos.getMotosByFilter(self.connection, filter);
       if (helpers.isEmpty(moto)) {
-        response = {
-          code: "409",
-          type: APIConstants.CONFLICT,
-          error: "This mac isn't registered to this user, the operation can't be done"
-        };
-        res.status(409).send(response);
+        httpResponses.notFound(res, "Mac not found");
       } else {
-        console.log("aqui");
         result = yield motos.deleteMoto(self.connection, filter);
         response = {
           code: 200,
           motoDeleted: moto
         }
-        res.status(201).send(response);
+        res.status(response.code).send(response);
       }
     }).catch((error) => {
       console.log(error);
       httpResponses.internalServerError(res);
     });
-  }
-
-  _hasThisMoto(motos, mac) {
-    let hasIt = false;
-    if(motos.length > 0){
-      let length = motos.length;
-      console.log(length);
-      for (let i=0; i<length; i++) {
-        if(motos[i].mac === mac) {
-          hasIt = true;
-          break;
-        }
-      }
-    }
-    return hasIt;
   }
 }

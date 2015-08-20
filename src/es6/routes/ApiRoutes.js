@@ -7,8 +7,8 @@ import UsersControllers from '../controllers/UsersControllers';
 import SessionControllers from '../controllers/SessionControllers';
 import config from '../config/config';
 import * as httpResponses from '../helpers/httpResponses';
+import * as helpers from '../helpers/helpers';
 import APIConstants from '../constants/APIConstants';
-
 
 //import MQTTClient from '../MQTTClient';
 
@@ -23,7 +23,7 @@ export default class ApiRoutes {
   }
 
   makeRoutes() {
-    // Allow cross domain
+    // Middleware that allows cross domain
     this.app.use((req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*");
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -32,57 +32,32 @@ export default class ApiRoutes {
 
     //urls for the api v1
 
-    //post => /api/v1/session
     this.app.post('/api/v1/sessions', (req, res) => this.sessionControllers.createSession(req, res));
-    //delete => /api/v1/session
     this.app.delete('/api/v1/sessions', (req, res) => this.sessionControllers.deleteSession(req, res));
 
-    //post => /api/v1/users
     this.app.post('/api/v1/users', (req, res) => this.usersControllers.createAnUser(req, res));
-    //get => /api/v1/users
-    //this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
 
-    //get => /api/v1/users/:username
-    this.app.get('/api/v1/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
+    this.app.get('/api/v1/users/:username', this._canMakeThisRequest, (req, res) => this.usersControllers.getUserByUsername(req, res));
 
-    //post => /api/v1/users/:username/motos
-    this.app.post('/api/v1/users/:username/motos', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.addAnUserMoto(req, res));
-    //get => /api/v1/users/:username/motos
-    this.app.get('/api/v1/users/:username/motos', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.getAllUserMotos(req, res));
+    this.app.put('/api/v1/users/:username/profile', this._canMakeThisRequest, (req, res) => this.usersControllers.updateUserProfile(req, res));
 
-    //get => /api/v1/users/:username/motos/:motoId
-    this.app.get('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.getAnUserMoto(req, res));
-    //update => /api/v1/users/:username/motos/:motoId
-    this.app.put('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.updateAnUserMoto(req, res));
-    //delete => /api/v1/users/:username/motos/:motoId
-    this.app.delete('/api/v1/users/:username/motos/:mac', this._isAValidAndNotExpiredToken, (req, res) => this.usersControllers.deleteAnUserMoto(req, res));
+    this.app.post('/api/v1/users/:username/motos', this._canMakeThisRequest, (req, res) => this.usersControllers.addAnUserMoto(req, res));
 
-    //get => /api/v1/users/:username/tokens/mqtt
-    this.app.get('/api/v1/users/:username/tokens/mqtt', this._isAValidAndNotExpiredToken, (req, res) => this.sessionControllers.createMQTTToken(req, res));
-    //get => /api/v1/users/:username/tokens/access
-    this.app.get('/api/v1/users/:username/tokens/access', this._isAValidToken, (req, res) => this.sessionControllers.createAccessTokenFromRefreshToken(req, res));
-    //this.app.get('/', (req, res) => this.usersControllers.index(req, res));
+    this.app.get('/api/v1/users/:username/motos', this._canMakeThisRequest, (req, res) => this.usersControllers.getAllUserMotos(req, res));
 
-    /*
-    this.app.get('/api/users/:username/notifications', (req, res) => {
-      let ns = [];
-      notifications.forEach((notification) => {
-        if (notification.username === req.params.username) {
-          ns.push(notification);
-        }
-      });
-      res.send(ns);
-    });
+    this.app.get('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.getAnUserMotoByMac(req, res));
 
-    this.app.post('/api/users/:username/notifications', (req, res) => {
-      let notification = {username:req.params.username, message: req.body.message};
-      notifications.push(notification);
-      MQTTClient.publish(`api/users/${req.params.username}/notifications`, 'new notifications');
-      res.send(notification);
-    })*/
+    this.app.put('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.updateAnUserMotoByMac(req, res));
+
+    this.app.delete('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.deleteAnUserMotoByMac(req, res));
+
+    this.app.get('/api/v1/tokens/mqtt', this._canMakeThisRequest, (req, res) => this.sessionControllers.createMQTTToken(req, res));
+
+    this.app.get('/api/v1/tokens/access', this._isAValidToken, (req, res) => this.sessionControllers.createAccessTokenFromRefreshToken(req, res));
+
   }
 
-  //This method verifies if the jwt is just valid
+  //Middleware to verify access tokens
   _isAValidToken(req, res, next){
     let response;
     if(req.headers['access-token']) {
@@ -90,94 +65,76 @@ export default class ApiRoutes {
       jwt.verify(accessToken, config.server.secret, function(error, decode) {
         if(error && error.name !== "TokenExpiredError") {
           if(error.name === "JsonWebTokenError"){
-            response = {
-              code: "400",
-              type: APIConstants.BAD_REQUEST,
-              error: "The access-token is invalild"
-            };
-            res.status(400).send(response);
+            httpResponses.badRequest(res, "The access-token is invalild");
           } else{
             httpResponses.internalServerError(res);
           }
         } else {
-          if(decode.username !== req.params.username) {
-            response = {
-              code: "401",
-              type: APIConstants.UNAUTHORIZED,
-              error: "The token is valid but isn't associated to this username"
+          req.user = {
+            id: decode.userId,
+            account: {
+              username: decode.username
             }
-            res.status(401).send(response);
-          }else{
-            req.user = {
-              id: decode.userId,
-              account: {
-                username: decode.username
+          }
+          if (req.params.username) {
+            if(decode.username !== req.params.username) {
+              if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){
+                next();
+              } else {
+                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
+              }
+            } else {
+              if (decode.scopes.me.indexOf(req.method.toLowerCase()) > -1){
+                next();
+              } else {
+                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
               }
             }
+          } else {
             next();
           }
         }
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You have to pass a JWT in the access-token header"
-      }
-      res.status(400).send(response);
+      httpResponses.badRequest(res, "You have to pass a JWT in the access-token header");
     }
   }
 
-  //his method verifies if the jwt is valid and also verifies if has not expired
-  _isAValidAndNotExpiredToken(req, res, next){
+  _canMakeThisRequest(req, res, next){
     let response;
     if(req.headers['access-token']) {
       let accessToken = req.headers['access-token'];
       jwt.verify(accessToken, config.server.secret, function(error, decode) {
         if(error) {
-          if(error.name === "JsonWebTokenError"){
-            response = {
-              code: "400",
-              type: APIConstants.BAD_REQUEST,
-              error: "The access-token is invalild"
-            };
-            res.status(400).send(response);
-          } else if(error.name === "TokenExpiredError") {
-            response = {
-              code: "401",
-              type: APIConstants.UNAUTHORIZED,
-              error: "The access-token has expired"
-            }
-            res.status(401).send(response);
-          } else{
-            httpResponses.internalServerError(res);
-          }
+          helpers.responseToAnError(res, error);
         } else {
-          if(decode.username !== req.params.username) {
-            response = {
-              code: "401",
-              type: APIConstants.UNAUTHORIZED,
-              error: "The token is valid but isn't associated to this username"
+          req.user = {
+            id: decode.userId,
+            account: {
+              username: decode.username
             }
-            res.status(401).send(response);
-          }else{
-            req.user = {
-              id: decode.userId,
-              account: {
-                username: decode.username
+          }
+          if (req.params.username) {
+            if(decode.username !== req.params.username) {
+              if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){
+                next();
+              } else {
+                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
+              }
+            } else {
+              if (decode.scopes.me.indexOf(req.method.toLowerCase()) > -1){
+                next();
+              } else {
+                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
               }
             }
+          } else {
             next();
           }
         }
       });
     } else {
-      response = {
-        code: "400",
-        type: APIConstants.BAD_REQUEST,
-        error: "You have to pass a JWT in the access-token header"
-      }
-      res.status(400).send(response);
+      httpResponses.badRequest(res, "You have to pass a JWT in the access-token header");
     }
   }
 }

@@ -19,6 +19,17 @@ export function usernameAlreadyExist(connection, username, callback) {
   });
 }
 
+export function getAllUsers(connection) {
+  return new Promise((resolve, reject) => {
+    co(function*() {
+      let result = yield r.table('users').filter({}).run(connection);
+      resolve(result._responses);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
 export function insertUser(connection, username, password) {
   return new Promise((resolve, reject) => {
     if (username && password) {
@@ -38,22 +49,32 @@ export function insertUser(connection, username, password) {
   });
 }
 
+export function updateUserProfile(connection, id, data) {
+  return new Promise((resolve, reject) => {
+    if (connection && id && data) {
+      co(function*() {
+        let result = yield r.db('sismo').table('users').get(id).update({profile:data}).run(connection);
+        resolve(result);
+      }).catch((error) => {
+        reject({type: APIConstants.DATABASE_ERROR, error: error});
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to pass a connection, id and data as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+
 export function getUserById(connection, id) {
   return new Promise((resolve, reject) => {
     co(function*() {
       let result = yield r.db('sismo').table('users').get(id).run(connection);
+      console.log(result);
       resolve(result);
-    }).catch((error) => {
-      reject({type: APIConstants.DATABASE_ERROR, error: error});
-    });
-  });
-}
-
-export function getAllUsers(connection) {
-  return new Promise((resolve, reject) => {
-    co(function*() {
-      let result = yield r.table('users').filter({}).run(connection);
-      resolve(result._responses);
     }).catch((error) => {
       reject({type: APIConstants.DATABASE_ERROR, error: error});
     });
@@ -64,6 +85,36 @@ export function getUserByUsername(connection, username) {
   return new Promise((resolve, reject) => {
     co(function*() {
       let result = yield r.table('users').filter({account: {username: username}}).run(connection);
+      let user = {};
+      if(result._responses.length > 0){
+        user = result._responses[0].r[0];
+      }
+      resolve(user);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
+export function getUsersByFilter(connection, filter) {
+  return new Promise((resolve, reject) => {
+    co(function*() {
+      let result = yield r.table('users').filter(filter).run(connection);
+      let user = {};
+      if(result._responses.length > 0){
+        user = result._responses[0].r;
+      }
+      resolve(user);
+    }).catch((error) => {
+      reject({type: APIConstants.DATABASE_ERROR, error: error});
+    });
+  });
+}
+
+export function getUserByFilter(connection, filter) {
+  return new Promise((resolve, reject) => {
+    co(function*() {
+      let result = yield r.table('users').filter(filter).run(connection);
       let user = {};
       if(result._responses.length > 0){
         user = result._responses[0].r[0];

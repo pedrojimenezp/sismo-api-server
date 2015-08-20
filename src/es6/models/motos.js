@@ -77,13 +77,36 @@ export function deleteMoto(connection, filter) {
 }
 
 
+export function getUserMotoByMac(connection, userId, mac) {
+  return new Promise((resolve, reject) => {
+    if (connection && userId && mac) {
+      co(function*() {
+        let result = yield r.db('sismo').table('motos').filter({userId:userId, mac: mac}).run(connection);
+        let response = {};
+        if(result._responses[0]){
+          response = result._responses[0].r[0];
+        }
+        resolve(response);
+      }).catch((error) => {
+        reject({type: APIConstants.DATABASE_ERROR, error: error});
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to pass a connection, userId and mac as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
 
 export function getMotosByUserId(connection, userId) {
   return new Promise((resolve, reject) => {
     if (connection && userId) {
       co(function*() {
         let result = yield r.db('sismo').table('motos').filter({userId:userId}).run(connection);
-        let response = {};
+        let response = [];
         if(result._responses[0]){
           response = result._responses[0].r;
         }
@@ -106,7 +129,7 @@ export function getMotosByFilter(connection, filter) {
     if (connection && filter) {
       co(function*() {
         let result = yield r.db('sismo').table('motos').filter(filter).run(connection);
-        let response = {};
+        let response = [];
         if(result._responses[0]){
           response = result._responses[0].r;
         }
