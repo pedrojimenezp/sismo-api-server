@@ -12,7 +12,11 @@ export function macAlreadyExist(connection, mac) {
       let count = yield r.db('sismo').table('motos').count(function(moto) {
         return user('mac').eq(mac);
       }).run(connection);
-      count === 0 ? resolve(false) : resolve(true);
+      if (count === 0) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
     }).catch((error) => {
       reject({type: APIConstants.DATABASE_ERROR, error: error});
     });

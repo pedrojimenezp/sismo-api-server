@@ -45,7 +45,7 @@ export default class SessionControllers {
             type: APIConstants.LOGIN_SUCCESS,
             accessToken: tokenInserted.accessToken,
             refreshToken: tokenInserted.refreshToken
-          }
+          };
           res.status(response.code).send(response);
         } else {
           httpResponses.unauthorized(res, "Incorrect username or password");
@@ -68,7 +68,7 @@ export default class SessionControllers {
         response = {
           code: 200,
           type: APIConstants.LOGOUT_SUCCESS
-        }
+        };
         res.status(response.code).send(response);
       }).catch((error) => {
         httpResponses.internalServerError(res);
@@ -103,7 +103,7 @@ export default class SessionControllers {
       response = {
         code: 201,
         MQTTToken: MQTTToken
-      }
+      };
       res.status(response.code).send(response);
     }).catch((error) => {
       console.log(error);

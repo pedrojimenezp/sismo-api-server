@@ -23,11 +23,14 @@
     "express": "^4.12.4",
     "jsonwebtoken": "^5.0.2",
     "morgan": "~1.5.3",
-    "mosca": "^0.30.4",
     "redis": "^0.12.1",
     "rethinkdb": "^2.0.2",
     "serve-favicon": "~2.2.1",
     "shortid": "^2.2.2",
     "swig": "^1.4.2"
+  },
+  "jshintConfig":{
+    "esnext": true,
+    "node": true
   }
 }

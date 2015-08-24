@@ -17,7 +17,7 @@ export function badRequest(res, error) {
     code: 400,
     type: APIConstants.BAD_REQUEST,
     error: error
-  }
+  };
   res.status(response.code).send(response);
 }
 
@@ -26,7 +26,7 @@ export function unauthorized(res, error) {
     code: 401,
     type: APIConstants.UNAUTHORIZED,
     error: error
-  }
+  };
   res.status(response.code).send(response);
 }
 
@@ -35,7 +35,7 @@ export function notFound(res, error) {
     code: 404,
     type: APIConstants.NOT_FOUND,
     error: error
-  }
+  };
   console.log(response);
   res.status(response.code).send(response);
 }

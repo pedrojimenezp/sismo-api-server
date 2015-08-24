@@ -6,13 +6,17 @@ import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import shortid  from 'shortid';
 
-export function usernameAlreadyExist(connection, username, callback) {
+export function usernameAlreadyExist(connection, username) {
   return new Promise((resolve, reject) => {
     co(function*() {
       let count = yield r.db('sismo').table('users').count(function(user) {
         return user('account')('username').eq(username);
       }).run(connection);
-      count === 0 ? resolve(false) : resolve(true);
+      if (count === 0) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
     }).catch((error) => {
       reject({type: APIConstants.DATABASE_ERROR, error: error});
     });

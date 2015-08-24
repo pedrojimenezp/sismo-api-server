@@ -50,7 +50,7 @@ let options = {
   host: 'localhost',
   port: 28015,
   db: 'sismo'
-}
+};
 
 r.connect(options)
 .then((connection) => {

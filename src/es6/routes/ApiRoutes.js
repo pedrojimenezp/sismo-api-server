@@ -54,7 +54,6 @@ export default class ApiRoutes {
     this.app.get('/api/v1/tokens/mqtt', this._canMakeThisRequest, (req, res) => this.sessionControllers.createMQTTToken(req, res));
 
     this.app.get('/api/v1/tokens/access', this._isAValidToken, (req, res) => this.sessionControllers.createAccessTokenFromRefreshToken(req, res));
-
   }
 
   //Middleware to verify access tokens
@@ -75,7 +74,7 @@ export default class ApiRoutes {
             account: {
               username: decode.username
             }
-          }
+          };
           if (req.params.username) {
             if(decode.username !== req.params.username) {
               if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){
@@ -113,7 +112,7 @@ export default class ApiRoutes {
             account: {
               username: decode.username
             }
-          }
+          };
           if (req.params.username) {
             if(decode.username !== req.params.username) {
               if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){

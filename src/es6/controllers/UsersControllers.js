@@ -27,7 +27,7 @@ export default class UsersControllers {
       response = {
         code: 200,
         users: result
-      }
+      };
       res.status(response.code).send(response);
     }).catch((error) => {
       httpResponses.internalServerError(res);
@@ -48,14 +48,14 @@ export default class UsersControllers {
         }
         let filter = {
           userId: user.id
-        }
+        };
         let userMotos = yield motos.getMotosByFilter(self.connection, filter);
         delete user.id;
         user.motos = userMotos;
         response = {
           code: 200,
           user: user
-        }
+        };
         res.status(response.code).send(response);
       }
     }).catch((error) => {
@@ -90,7 +90,7 @@ export default class UsersControllers {
             userCreated: userInserted,
             accessToken: tokenInserted.accessToken,
             refreshToken: tokenInserted.refreshToken
-          }
+          };
           res.status(response.code).send(response);
         }
       }).catch((error) => {
@@ -127,7 +127,7 @@ export default class UsersControllers {
         let userUpdated = yield users.getUserById(self.connection, req.user.id);
         let filter = {
           userId: user.id
-        }
+        };
         let userMotos = yield motos.getMotosByFilter(self.connection, filter);
         delete userUpdated.account.password;
         delete userUpdated.id;
@@ -135,7 +135,7 @@ export default class UsersControllers {
         response = {
           code: 200,
           userUpdated: userUpdated
-        }
+        };
         res.status(response.code).send(response);
       }
     }).catch((error) => {
@@ -152,7 +152,7 @@ export default class UsersControllers {
         let filter = {
           userId: req.user.id,
           mac: req.body.mac
-        }
+        };
         let userMotos = yield motos.getMotosByFilter(self.connection, filter);
         console.log(userMotos);
         if (userMotos.length > 0) {
@@ -187,7 +187,7 @@ export default class UsersControllers {
           response = {
             code: 201,
             motoAdded: motoInserted
-          }
+          };
           res.status(response.code).send(response);
         }
       }).catch((error) => {
@@ -228,7 +228,7 @@ export default class UsersControllers {
       response = {
         code: 200,
         motos: userMotos
-      }
+      };
       res.status(response.code).send(response);
     }).catch((error) => {
       console.log(error);
@@ -252,7 +252,7 @@ export default class UsersControllers {
         response = {
           code: 200,
           moto: userMoto
-        }
+        };
         res.status(response.code).send(response);
       }
     }).catch((error) => {
@@ -269,7 +269,7 @@ export default class UsersControllers {
       let filter = {
         userId: req.user.id,
         mac: req.params.mac
-      }
+      };
       let moto = yield motos.getMotosByFilter(self.connection, filter);
       if (helpers.isEmpty(moto)) {
         httpResponses.notFound(res, "Mac not found");
@@ -297,7 +297,7 @@ export default class UsersControllers {
         response = {
           code: 200,
           motoUpdated: motoUpdated
-        }
+        };
         res.status(response.code).send(response);
       }
     }).catch((error) => {
@@ -314,7 +314,7 @@ export default class UsersControllers {
       let filter = {
         userId: req.user.id,
         mac: req.params.mac
-      }
+      };
       let moto = yield motos.getMotosByFilter(self.connection, filter);
       if (helpers.isEmpty(moto)) {
         httpResponses.notFound(res, "Mac not found");
@@ -323,7 +323,7 @@ export default class UsersControllers {
         response = {
           code: 200,
           motoDeleted: moto
-        }
+        };
         res.status(response.code).send(response);
       }
     }).catch((error) => {

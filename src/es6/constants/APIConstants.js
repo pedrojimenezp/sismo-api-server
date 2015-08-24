@@ -8,6 +8,6 @@ const APIConstants = {
   LOGIN_SUCCESS : 'LOGIN_SUCCESS',
   LOGOUT_SUCCESS : 'LOGOUT_SUCCESS',
   NOT_FOUND : 'NOT_FOUND'
-}
+};
 
 export default APIConstants;
