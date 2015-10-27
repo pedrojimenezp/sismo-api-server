@@ -3,8 +3,10 @@ import express from 'express';
 import jwt from "jsonwebtoken";
 //const router = express.Router();
 
-import UsersControllers from '../controllers/UsersControllers';
-import SessionControllers from '../controllers/SessionControllers';
+import UsersControllers from '../controllers/UsersController';
+import TokensControllers from '../controllers/TokensController';
+import SessionControllers from '../controllers/SessionController';
+import Middlewares from '../helpers/Middlewares';
 import config from '../config/config';
 import * as httpResponses from '../helpers/httpResponses';
 import * as helpers from '../helpers/helpers';
@@ -15,10 +17,12 @@ import APIConstants from '../constants/APIConstants';
 //let notifications = [];
 
 export default class ApiRoutes {
-  constructor(app, connection) {
+  constructor(app, db) {
     this.app = app;
-    this.usersControllers = new UsersControllers(connection);
-    this.sessionControllers = new SessionControllers(connection);
+    this.middlewares = new Middlewares(db);
+    this.usersControllers = new UsersControllers(db);
+    this.sessionControllers = new SessionControllers(db);
+    this.tokensControllers = new TokensControllers(db);
     this.makeRoutes();
   }
 
@@ -32,108 +36,67 @@ export default class ApiRoutes {
 
     //urls for the api v1
 
-    this.app.post('/api/v1/sessions', (req, res) => this.sessionControllers.createSession(req, res));
-    this.app.delete('/api/v1/sessions', (req, res) => this.sessionControllers.deleteSession(req, res));
+    this.app.get('/api/v1/access-token', (req, res) => this.tokensControllers.createToken(req, res));
+    this.app.delete('/api/v1/access-token',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "tokens", next),
+      (req, res) => this.tokensControllers.deleteToken(req, res));
+    
+    
+    this.app.post('/api/v1/users', (req, res) => this.usersControllers.createUser(req, res));
+    //this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
 
-    this.app.post('/api/v1/users', (req, res) => this.usersControllers.createAnUser(req, res));
 
-    this.app.get('/api/v1/users/:username', this._canMakeThisRequest, (req, res) => this.usersControllers.getUserByUsername(req, res));
+    this.app.get('/api/v1/users/:username', 
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "profile", next),
+      (req, res) => this.usersControllers.getUserByUsername(req, res));
 
-    this.app.put('/api/v1/users/:username/profile', this._canMakeThisRequest, (req, res) => this.usersControllers.updateUserProfile(req, res));
+    /*this.app.put('/api/v1/users/:username/profile', this._canMakeThisRequest, (req, res) => this.usersControllers.updateUserProfile(req, res));
+*/
+    this.app.post('/api/v1/users/:username/motos', 
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next), 
+      (req, res) => this.usersControllers.addUserMoto(req, res));
 
-    this.app.post('/api/v1/users/:username/motos', this._canMakeThisRequest, (req, res) => this.usersControllers.addAnUserMoto(req, res));
+    this.app.get('/api/v1/users/:username/motos',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.getAllUserMotos(req, res));
 
-    this.app.get('/api/v1/users/:username/motos', this._canMakeThisRequest, (req, res) => this.usersControllers.getAllUserMotos(req, res));
+    this.app.get('/api/v1/users/:username/motos/:mac', 
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.getUserMotoByMac(req, res));
+    
+    this.app.get('/api/v1/users/:username/motos/:mac/image',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.getUserMotoImageByMac(req, res));
 
-    this.app.get('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.getAnUserMotoByMac(req, res));
+    this.app.put('/api/v1/users/:username/motos/:mac',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.updateUserMotoByMac(req, res));
 
-    this.app.put('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.updateAnUserMotoByMac(req, res));
+    this.app.delete('/api/v1/users/:username/motos/:mac',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.deleteUserMotoByMac(req, res));
 
-    this.app.delete('/api/v1/users/:username/motos/:mac', this._canMakeThisRequest, (req, res) => this.usersControllers.deleteAnUserMotoByMac(req, res));
+    this.app.get('/api/v1/users/:username/motos/:mac/status',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.getUserMotoStatusByMac(req, res));
 
-    this.app.get('/api/v1/tokens/mqtt', this._canMakeThisRequest, (req, res) => this.sessionControllers.createMQTTToken(req, res));
+    this.app.put('/api/v1/users/:username/motos/:mac/status',
+      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
+      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
+      (req, res) => this.usersControllers.updateUserMotoStatusByMac(req, res));
 
-    this.app.get('/api/v1/tokens/access', this._isAValidToken, (req, res) => this.sessionControllers.createAccessTokenFromRefreshToken(req, res));
-  }
+    this.app.get('/api/v1/verification/access-token', (req, res) => this.tokensControllers.verifyAccessToken(req, res));
 
-  //Middleware to verify access tokens
-  _isAValidToken(req, res, next){
-    let response;
-    if(req.headers['access-token']) {
-      let accessToken = req.headers['access-token'];
-      jwt.verify(accessToken, config.server.secret, function(error, decode) {
-        if(error && error.name !== "TokenExpiredError") {
-          if(error.name === "JsonWebTokenError"){
-            httpResponses.badRequest(res, "The access-token is invalild");
-          } else{
-            httpResponses.internalServerError(res);
-          }
-        } else {
-          req.user = {
-            id: decode.userId,
-            account: {
-              username: decode.username
-            }
-          };
-          if (req.params.username) {
-            if(decode.username !== req.params.username) {
-              if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){
-                next();
-              } else {
-                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
-              }
-            } else {
-              if (decode.scopes.me.indexOf(req.method.toLowerCase()) > -1){
-                next();
-              } else {
-                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
-              }
-            }
-          } else {
-            next();
-          }
-        }
-      });
-    } else {
-      httpResponses.badRequest(res, "You have to pass a JWT in the access-token header");
-    }
-  }
 
-  _canMakeThisRequest(req, res, next){
-    let response;
-    if(req.headers['access-token']) {
-      let accessToken = req.headers['access-token'];
-      jwt.verify(accessToken, config.server.secret, function(error, decode) {
-        if(error) {
-          helpers.responseToAnError(res, error);
-        } else {
-          req.user = {
-            id: decode.userId,
-            account: {
-              username: decode.username
-            }
-          };
-          if (req.params.username) {
-            if(decode.username !== req.params.username) {
-              if (decode.scopes.others.indexOf(req.method.toLowerCase()) > -1){
-                next();
-              } else {
-                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
-              }
-            } else {
-              if (decode.scopes.me.indexOf(req.method.toLowerCase()) > -1){
-                next();
-              } else {
-                httpResponses.unauthorized(res, "The token is valid but you can't make this request");
-              }
-            }
-          } else {
-            next();
-          }
-        }
-      });
-    } else {
-      httpResponses.badRequest(res, "You have to pass a JWT in the access-token header");
-    }
+    this.app.post('/api/v1/motos/access-token', (req, res) => this.sessionControllers.createMotoAccessToken(req, res));
   }
 }
