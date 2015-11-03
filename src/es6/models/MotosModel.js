@@ -5,6 +5,33 @@ import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import shortid  from 'shortid';
 
+/*
+Motos have this info
+
+motos = {
+  id: ObjectId,
+  userId: OnjectId,
+  mac: string,
+  brand: string,
+  line: string,
+  model: int,
+  plate: string,
+  color: string,
+  cylinderCapacity: int,
+  image: string,
+  imageEncodeType: string,
+  status: {
+    monitoring: string,
+    electricalFlow: string,
+    safetyLock: string,
+    parkingLocation: {
+      latitude: string,
+      longitude: string
+    }
+  }
+}
+*/
+
 export function insertMoto(db, moto) {
   console.log("-> calling function insertMoto in MotosModel"); 
   return new Promise((resolve, reject) => {

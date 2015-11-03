@@ -6,18 +6,11 @@ import config from '../config/config';
 import shortid  from 'shortid';
 
 /*
-Thefts have this info
+Recoveries have this info
 
-thefts = {
+recoveries = {
   id: ObjectId,
-  motoInfo: {
-    brand: string,
-    line: string,
-    model: int,
-    plate: string,
-    color: string,
-    cylinderCapacity: int
-  },
+  theftId: ObjectId,
   location: {
     latitude: string,
     longitude: string,
@@ -35,12 +28,12 @@ thefts = {
 }
 */
 
-export function insertTheft(db, theft) {
-  console.log("-> calling function insertTheft in TheftModel"); 
+export function insertRecovery(db, recovery) {
+  console.log("-> calling function insertRecovery in RecoveriesModel"); 
   return new Promise((resolve, reject) => {
-    if (db && theft) {
-      let theftsCollection = db.collection('thefts');
-      theftsCollection.insert(theft, (error, result) => {
+    if (db && recovery) {
+      let recoveriesCollection = db.collection('recoveries');
+      recoveriesCollection.insert(recovery, (error, result) => {
         if(error){
           reject({type: APIConstants.DATABASE_ERROR, error: error});
         }else{
@@ -50,24 +43,23 @@ export function insertTheft(db, theft) {
     } else {
       const error = {
         type: APIConstants.MISSING_PARAMETERS,
-        error: "You need to db and theft as parameters"
+        error: "You need to db and recovery as parameters"
       };
       reject(error);
     }
   });
 }
 
-
-export function getTheftsByFilter(db, filter) {
-  console.log("-> calling function getTheftsByFilter in TheftModel");
+export function findRecoveriesByFilter(db, filter, sort, limit) {
+  console.log("-> calling function findRecoveriesByFilter in RecoveriesModel");
   return new Promise((resolve, reject) => {
     if (db && filter) {
-      let theftsCollection = db.collection('thefts');
-      theftsCollection.find(filter).toArray((error, thefts) => {
+      let recoveriesCollection = db.collection('recoveries');
+      recoveriesCollection.find(filter).sort(sort).limit(limit).toArray((error, recoveries) => {
         if(error){
           reject({type: APIConstants.DATABASE_ERROR, error: error});
         }else{
-          resolve(thefts);
+          resolve(recoveries);
         }
       });
     } else {

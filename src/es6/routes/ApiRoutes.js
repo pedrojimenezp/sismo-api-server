@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import UsersControllers from '../controllers/UsersController';
 import TokensControllers from '../controllers/TokensController';
 import SessionControllers from '../controllers/SessionController';
+import NotificationsControllers from '../controllers/NotificationsController';
 import Middlewares from '../helpers/Middlewares';
 import config from '../config/config';
 import * as httpResponses from '../helpers/httpResponses';
@@ -16,6 +17,8 @@ import APIConstants from '../constants/APIConstants';
 
 //let notifications = [];
 
+console.log(NotificationsControllers);
+
 export default class ApiRoutes {
   constructor(app, db) {
     this.app = app;
@@ -23,6 +26,7 @@ export default class ApiRoutes {
     this.usersControllers = new UsersControllers(db);
     this.sessionControllers = new SessionControllers(db);
     this.tokensControllers = new TokensControllers(db);
+    this.notificationsControllers = new NotificationsControllers(db);
     this.makeRoutes();
   }
 
@@ -98,5 +102,9 @@ export default class ApiRoutes {
 
 
     this.app.post('/api/v1/motos/access-token', (req, res) => this.sessionControllers.createMotoAccessToken(req, res));
+    
+    this.app.get('/api/v1/notifications', (req, res) => this.notificationsControllers.getNotifications(req, res));
+    this.app.post('/api/v1/notifications', (req, res) => this.notificationsControllers.insertNotification(req, res));
+    this.app.put('/api/v1/notifications/:notificationId/read', (req, res) => this.notificationsControllers.updateNotificationStatusToRead(req, res));
   }
 }
