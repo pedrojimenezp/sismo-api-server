@@ -54,7 +54,8 @@ let options = {
   db: 'sismo'
 };
 
-let mongodbUrl = 'mongodb://localhost:27017/sismo';
+//let mongodbUrl = 'mongodb://localhost:27017/sismo';
+let mongodbUrl = 'mongodb://admin:1q2w3e4r@ds031098.mongolab.com:31098/sismo-api';
 
 MongoClient.connect(mongodbUrl, function(error, db) {
   if(error){
@@ -80,32 +81,5 @@ MongoClient.connect(mongodbUrl, function(error, db) {
     });
   }
 });
-
-/*r.connect(options)
-.then((connection) => {
-  console.log(`Connected to ${options.db} database rethinkdb on http://${options.host}:${options.port}.`);
-
-  new ApiRoutes(app, connection);
-
-  let port = process.env.PORT || '4000';
-  app.set('port', port);
-
-  let server = http.createServer(app);
-
-  server.listen(port);
-  server.on('error', function(error) {
-    console.error(error);
-  });
-
-  server.on('listening', function() {
-    console.log(`HTTP server is listening in localhost:${port}`);
-  });
-})
-.catch((error) => {
-  console.log(error);
-  if(error.name === 'RqlDriverError'){
-    console.log(`Error trying to connect to ${options.db} database rethinkdb on http://${options.localhost}:${options.port}.`);
-  }
-});*/
 
 

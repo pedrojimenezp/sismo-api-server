@@ -19,13 +19,13 @@ export default class UsersController {
     this.db = db;
   }
 
-  getAllUsers(req, res) {
+  getUsers(req, res) {
     console.log("-> callling function getAllUsers in UsersControllers");
     let self = this;
     let result;
     let response;
     co(function*() {
-      result = yield usersModel.getAllUsers(self.db);
+      result = yield usersModel.findUsers(self.db);
       response = {
         code: 200,
         users: result
@@ -45,14 +45,11 @@ export default class UsersController {
     co(function*() {
       let user = yield usersModel.findUserByFilter(self.db, {'account.username': req.params.username});
       if (user){
-        delete user._id;
         if(user.account) {
           delete user.account.password;
         }
-        if (req.user.username === req.params.username) {
-          let userMotos = yield motosModel.findMotosByFilter(self.db, {userId: user._id});
-          user.motos = userMotos;
-        }
+        let userMotos = yield motosModel.findMotosByFilter(self.db, {userId: user._id});
+        user.motos = userMotos;
         response = {
           code: 200,
           status: 'Ok',
@@ -74,8 +71,8 @@ export default class UsersController {
     });
   }
 
-  createUser(req, res) {
-    console.log("-> callling function createUser in UsersControllers");
+  insertUser(req, res) {
+    console.log("-> callling function insertUser in UsersControllers");
     const self = this;
     let response;
     let result;
@@ -101,19 +98,11 @@ export default class UsersController {
           delete userInserted.account.password;
           userInserted.profile = {};
           userInserted.motos = [];
-          let scopes = ["motos", "profile", "thefts", "recoveries", "logs"];
-          let token = tokensModel.createTokenObject(userInserted._id, scopes);
-          result = yield tokensModel.insertToken(self.db, token);
-          let tokenInserted = result.ops[0];
-          delete tokenInserted._id;
-          delete tokenInserted.userId;
           response = {
             code: 201,
-            userCreated: userInserted,
-            tokens: tokenInserted
+            user: userInserted
           };
           res.status(response.code).send(response);
-          //res.send("ok");
         }
       }).catch((error) => {
         console.log(error);
@@ -123,424 +112,69 @@ export default class UsersController {
       httpResponses.badRequest(res, "You have to pass a username and password");
     }
   }
-  
-  /*updateUserProfile(req, res) {
-    let response;
-    let result;
-    let self = this;
-    co(function*() {
-      let user = yield users.getUserById(self.connection, req.user.id);
-      if (helpers.isEmpty(user)) {
-        httpResponses.notFound(res, "Username not found");
-      } else {
-        let profile = {};
-        if (user.profile) {
-          profile = user.profile;
-        }
-        if(req.body.name) {
-          profile.name = req.body.name;
-        }
-        if(req.body.age) {
-          profile.age = req.body.age;
-        }
-        if(req.body.sex) {
-          profile.sex = req.body.sex;
-        }
-        result = yield users.updateUserProfile(self.connection, req.user.id, profile);
-        let userUpdated = yield users.getUserById(self.connection, req.user.id);
-        let filter = {
-          userId: user.id
-        };
-        let userMotos = yield motos.getMotosByFilter(self.connection, filter);
-        delete userUpdated.account.password;
-        delete userUpdated.id;
-        userUpdated.motos = userMotos;
-        response = {
-          code: 200,
-          userUpdated: userUpdated
-        };
-        res.status(response.code).send(response);
-      }
-    }).catch((error) => {
-      httpResponses.internalServerError(res);
-    });
-  }*/
 
-  addUserMoto(req, res) {
-    console.log("-> callling function addUserMoto in UsersControllers");
+  login(req, res){
+    console.log("-> callling function createToken in TokensController");
     let self = this;
     let response;
     let result;
     let errorResponse;
-    console.log(req.user);
-    if (req.body.mac) {
-      co(function*() {
-        let filter = {
-          userId: req.user.id,
-          mac: req.body.mac
-        };
-        console.log(filter);
-        let userMoto = yield motosModel.findMotoByFilter(self.db, filter);
-        console.log(userMoto);
-        if (!userMoto) {
-          let newMoto = {
-            userId: req.user.id,
-            mac: req.body.mac,
-            brand: "",
-            line: "",
-            model: 0,
-            plate: "",
-            color: "",
-            cylinderCapacity: 0,
-            image: "",
-            imageEncodeType: "",
-            status: {
-              monitoring: "off",
-              electricalFlow: "unlocked",
-              safetyLock: "unlocked"
-            }
-          };
-          if(req.body.brand) {
-            newMoto.brand = req.body.brand;
+    if(req.headers.authorization && req.headers.authorization !== ""){
+      let authorization = req.headers.authorization.split(" ");
+      if(authorization[0] === "Basic"){
+        if(authorization[1] !== ""){
+          let usernameAndPassword = new Buffer(authorization[1], 'base64').toString();
+          let array = usernameAndPassword.split(":");
+          if(array.length === 2){
+            let username = array[0];
+            let password = array[1];
+            co(function*() {
+              let user = yield usersModel.findUserByFilter(self.db, {'account.username': username});
+              console.log(user);
+              if (user && user.account.password === password) {
+                delete user.account.password;
+                response = {
+                  user: user
+                };
+                httpResponses.Ok(res, response);
+              } else {
+                errorResponse = {
+                  error: "Wrong username or password",
+                  description: "The username or password you sent are incorrects"
+                };
+                httpResponses.unauthorized(res, errorResponse);
+              }
+            }).catch((error) => {
+              httpResponses.internalServerError(res, error);
+            });
+          } else {
+            errorResponse = {
+              error: "Wrong username:password codification",
+              description: "To use the Basic authentication you must to send username:password with base64 codification in the authentication header with Basic flag"
+            };
+            httpResponses.badRequest(res, errorResponse);
           }
-          if(req.body.line) {
-            newMoto.line = req.body.line;
-          }
-          if(req.body.model) {
-            newMoto.model = req.body.model;
-          }
-          if(req.body.plate) {
-            newMoto.plate = req.body.plate;
-          }
-          if(req.body.color) {
-            newMoto.color = req.body.color;
-          }
-          if(req.body.cylinderCapacity) {
-            newMoto.cylinderCapacity = req.body.cylinderCapacity;
-          }
-          if(req.body.image) {
-            newMoto.image = req.body.image;
-          }
-          if(req.body.imageEncodeType) {
-            newMoto.imageEncodeType = req.body.imageEncodeType;
-          }
-          result = yield motosModel.insertMoto(self.db, newMoto);
-          let motoInserted = result.ops[0];
-          delete motoInserted.image;
-          delete motoInserted.userId;
-          delete motoInserted._id;
-          response = {
-            code: 201,
-            status: 'Created',
-            result: {
-              moto: motoInserted
-            }
-          };
-          res.status(response.code).send(response);
-        } else {
+        }else{
           errorResponse = {
-            error: "Mac already exist",
-            description: "The the mac you want to register to this user is already registered i another moto of the same user, you have to send another"
+            error: "Wrong format of Basic authentication method",
+            description: "To use the Basic authentication you must to send username:password with base64 codification in the authentication header with Basic flag"
           };
-          httpResponses.conflict(res, errorResponse);
+          httpResponses.badRequest(res, errorResponse);
         }
-      }).catch((error) => {
-        httpResponses.internalServerError(res);
-      });
+      }else{
+        errorResponse = {
+          type: "Wrong format of Basic authentication method",
+          description: "To use the Basic authentication you must to send username:password with base64 codification in the authentication header with Basic flag"
+        }
+        httpResponses.badRequest(res, errorResponse);
+      }
     } else {
       errorResponse = {
-        error: "Missing parameters",
-        description: "You have to sent at least the mac associated to the moto in the body of the request"
-      };
+        error: "Invalid authentication method",
+        description: "To login you must to use the Basic authentication it means send username:password with base64 codification in the authentication header with Basic flag"
+      }
       httpResponses.badRequest(res, errorResponse);
     }
-  }
-
-  getAllUserMotos(req, res) {
-    console.log("-> callling function getAllUserMotos in UsersControllers");
-    let self = this;
-    let response;
-    let result;
-    let filter = {
-      userId: req.user.id
-    };
-    if (req.query.mac) {
-      filter.mac = req.query.mac;
-    }
-    if (req.query.brand) {
-      filter.brand = req.query.brand;
-    }
-    if(req.query.line) {
-      filter.line = req.query.line;
-    }
-    if (req.query.model) {
-      filter.model = req.query.model;
-    }
-    if (req.query.plate) {
-      filter.plate = req.query.plate;
-    }
-    if (req.query.color) {
-      filter.color = req.query.color;
-    }
-    if (req.query.cylinderCapacity) {
-      filter.cylinderCapacity = req.query.cylinderCapacity;
-    }
-    co(function*() {
-      let userMotos = yield motosModel.findMotosByFilter(self.db, filter);
-      response = {
-        code: 200,
-        status: 'Ok',
-        result: {
-          motos: userMotos
-        }
-      };
-      res.status(response.code).send(response);
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  getUserMotoByMac(req, res) {
-    console.log("-> callling function getUserMotoByMac in UsersControllers");
-    let self = this;
-    let response;
-    let result;
-    let errorResponse;
-    let filter = {
-      userId: req.user.id,
-      mac: req.params.mac
-    };
-    co(function*() {
-      let userMoto = yield motosModel.findMotoByFilter(self.db, filter);
-      if(userMoto){
-        if(req.query.image == "no"){
-          delete userMoto.image;
-        }
-        response = {
-          code: 200,
-          status: 'Ok',
-          result: {
-            moto: userMoto
-          }
-        };
-        res.status(response.code).send(userMoto);
-      }else{
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  getUserMotoImageByMac(req, res) {
-    console.log("-> callling function getAnUserMotoImageByMac in UsersControllers");
-    let self = this;
-    let response;
-    let result;
-    let errorResponse;
-    let filter = {
-      userId: req.user.id,
-      mac: req.params.mac
-    };
-    co(function*() {
-      let userMoto = yield motosModel.findMotoByFilter(self.db, filter);
-      if (userMoto) {
-        var img = new Buffer(userMoto.image, 'base64');
-        res.writeHead(200, {
-          'Content-Type': "image/png",
-          'Content-Length': img.length,
-          'Content-Disposition' : 'inline; filename="'+userMoto.mac+'"'
-        });
-        res.write(img);
-        res.end();
-      }else{
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  updateUserMotoByMac(req, res) {
-    console.log("-> callling function updateUserMotoByMac in UsersControllers"); 
-    let self = this;
-    let response;
-    let result;
-    let errorResponse;
-    co(function*() {
-      let filter = {
-        userId: req.user.id,
-        mac: req.params.mac
-      };
-      let moto = yield motosModel.findMotoByFilter(self.db, filter);
-      if (moto) {
-        if(req.body.mac) {
-          moto.mac = req.body.mac;
-        }
-        if(req.body.brand) {
-          moto.brand = req.body.brand;
-        }
-        if(req.body.line) {
-          moto.line = req.body.line;
-        }
-        if(req.body.model) {
-          moto.model = req.body.model;
-        }
-        if(req.body.plate) {
-          moto.plate = req.body.plate;
-        }
-        if(req.body.color) {
-          moto.color = req.body.color;
-        }
-        if(req.body.cylinderCapacity) {
-          moto.cylinderCapacity = req.body.cylinderCapacity;
-        }
-        if(req.body.image) {
-          moto.image = req.body.image;
-        }
-        if(req.body.imageEncodeType) {
-          moto.imageEncodeType = req.body.imageEncodeType;
-        }
-        delete moto._id;
-        delete moto.userId;
-        result = yield motosModel.updateMotoByFilter(self.db, filter, moto);
-        response = {
-          code: 200,
-          status: "Ok",
-        };
-        res.status(response.code).send(response);
-      } else {
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  deleteUserMotoByMac(req, res) {
-    console.log("-> callling function deleteUserMotoByMac in UsersControllers");    
-    let self = this;
-    let response;
-    let errorResponse;
-    let result;
-    co(function*() {
-      let filter = {
-        userId: req.user.id,
-        mac: req.params.mac
-      };
-      let moto = yield motosModel.findMotoByFilter(self.db, filter);
-      if (moto) {
-        result = yield motosModel.deleteMotoByFilter(self.db, filter);
-        response = {
-          code: 200,
-          status: 'Ok'
-        };
-        res.status(response.code).send(response);
-      } else {
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  updateUserMotoStatusByMac(req, res) {
-    console.log("-> callling function updateUserMotoStatusByMac in UsersControllers"); 
-    let self = this;
-    let response;
-    let result;
-    let errorResponse;
-    co(function*() {
-      let filter = {
-        userId: req.user.id,
-        mac: req.params.mac
-      };
-      let moto = yield motosModel.findMotoByFilter(self.db, filter);
-      if (moto) {
-        let dataToUpdate = {
-          status: moto.status
-        }
-        if(req.body.monitoring) {
-          dataToUpdate.status.monitoring = req.body.monitoring;
-        }
-        if(req.body.safetyLock) {
-          dataToUpdate.status.safetyLock = req.body.safetyLock;
-        }
-        if(req.body.electricalFlow) {
-          dataToUpdate.status.electricalFlow = req.body.electricalFlow;
-        }
-        result = yield motosModel.updateMotoByFilter(self.db, filter, dataToUpdate);
-        response = {
-          code: 200,
-          status: "Ok",
-        };
-        res.status(response.code).send(response);
-      } else {
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
-  }
-
-  getUserMotoStatusByMac(req, res) {
-    console.log("-> callling function getUserMotoStatusByMac in UsersControllers"); 
-    let self = this;
-    let response;
-    let result;
-    let errorResponse;
-    co(function*() {
-      let filter = {
-        userId: req.user.id,
-        mac: req.params.mac
-      };
-      let moto = yield motosModel.findMotoByFilter(self.db, filter);
-      if (moto) {
-        response = {
-          code: 200,
-          status: "Ok",
-          result: {
-            status: moto.status
-          }
-        };
-        res.status(response.code).send(response);
-      } else {
-        errorResponse = {
-          error: "Mac not found",
-          description: "This user doesn't has any moto with this mac"
-        };
-        httpResponses.notFound(res, errorResponse);
-      }
-    }).catch((error) => {
-      console.log(error);
-      httpResponses.internalServerError(res);
-    });
   }
 }
 

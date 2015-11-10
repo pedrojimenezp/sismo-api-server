@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 //const router = express.Router();
 
 import UsersControllers from '../controllers/UsersController';
+import MotosControllers from '../controllers/MotosController';
 import TokensControllers from '../controllers/TokensController';
 import SessionControllers from '../controllers/SessionController';
 import NotificationsControllers from '../controllers/NotificationsController';
@@ -13,17 +14,12 @@ import * as httpResponses from '../helpers/httpResponses';
 import * as helpers from '../helpers/helpers';
 import APIConstants from '../constants/APIConstants';
 
-//import MQTTClient from '../MQTTClient';
-
-//let notifications = [];
-
-console.log(NotificationsControllers);
-
 export default class ApiRoutes {
   constructor(app, db) {
     this.app = app;
     this.middlewares = new Middlewares(db);
     this.usersControllers = new UsersControllers(db);
+    this.motosControllers = new MotosControllers(db);
     this.sessionControllers = new SessionControllers(db);
     this.tokensControllers = new TokensControllers(db);
     this.notificationsControllers = new NotificationsControllers(db);
@@ -37,74 +33,29 @@ export default class ApiRoutes {
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       next();
     });
-
-    //urls for the api v1
-
-    this.app.get('/api/v1/access-token', (req, res) => this.tokensControllers.createToken(req, res));
-    this.app.delete('/api/v1/access-token',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "tokens", next),
-      (req, res) => this.tokensControllers.deleteToken(req, res));
     
+    this.app.post('/api/v1/login', (req, res) => this.usersControllers.login(req, res));
     
-    this.app.post('/api/v1/users', (req, res) => this.usersControllers.createUser(req, res));
-    //this.app.get('/api/v1/users', (req, res) => this.usersControllers.getAllUsers(req, res));
-
-
-    this.app.get('/api/v1/users/:username', 
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "profile", next),
-      (req, res) => this.usersControllers.getUserByUsername(req, res));
-
-    /*this.app.put('/api/v1/users/:username/profile', this._canMakeThisRequest, (req, res) => this.usersControllers.updateUserProfile(req, res));
-*/
-    this.app.post('/api/v1/users/:username/motos', 
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next), 
-      (req, res) => this.usersControllers.addUserMoto(req, res));
-
-    this.app.get('/api/v1/users/:username/motos',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.getAllUserMotos(req, res));
-
-    this.app.get('/api/v1/users/:username/motos/:mac', 
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.getUserMotoByMac(req, res));
+    this.app.post('/api/v1/users', (req, res) => this.usersControllers.insertUser(req, res));
     
-    this.app.get('/api/v1/users/:username/motos/:mac/image',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.getUserMotoImageByMac(req, res));
+    this.app.get('/api/v1/users', (req, res) => this.usersControllers.getUsers(req, res));
 
-    this.app.put('/api/v1/users/:username/motos/:mac',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.updateUserMotoByMac(req, res));
+    this.app.get('/api/v1/users/:username', (req, res) => this.usersControllers.getUserByUsername(req, res));
 
-    this.app.delete('/api/v1/users/:username/motos/:mac',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.deleteUserMotoByMac(req, res));
+    this.app.post('/api/v1/motos', (req, res) => this.motosControllers.insertMoto(req, res));
 
-    this.app.get('/api/v1/users/:username/motos/:mac/status',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.getUserMotoStatusByMac(req, res));
+    this.app.get('/api/v1/motos', (req, res) => this.motosControllers.getMotos(req, res));
 
-    this.app.put('/api/v1/users/:username/motos/:mac/status',
-      (req, res, next) => this.middlewares.tokenHasExpired(req, res, next),
-      (req, res, next) => this.middlewares.canAccessToThisScope(req, res, "motos", next),  
-      (req, res) => this.usersControllers.updateUserMotoStatusByMac(req, res));
+    this.app.get('/api/v1/motos/:mac', (req, res) => this.motosControllers.getMotoByMac(req, res));
+    
+    this.app.put('/api/v1/motos/:mac',(req, res) => this.motosControllers.updateMotoByMac(req, res));
+    
+    this.app.delete('/api/v1/motos/:mac', (req, res) => this.motosControllers.deleteMotoByMac(req, res));
+    
+    this.app.get('/api/v1/motos/:mac/image', (req, res) => this.motosControllers.getMotoImageByMac(req, res));
+
+    this.app.put('/api/v1/motos/:mac/status', (req, res) => this.motosControllers.updateMotoStatusByMac(req, res));
 
     this.app.get('/api/v1/verification/access-token', (req, res) => this.tokensControllers.verifyAccessToken(req, res));
-
-
-    this.app.post('/api/v1/motos/access-token', (req, res) => this.sessionControllers.createMotoAccessToken(req, res));
-    
-    this.app.get('/api/v1/notifications', (req, res) => this.notificationsControllers.getNotifications(req, res));
-    this.app.post('/api/v1/notifications', (req, res) => this.notificationsControllers.insertNotification(req, res));
-    this.app.put('/api/v1/notifications/:notificationId/read', (req, res) => this.notificationsControllers.updateNotificationStatusToRead(req, res));
   }
 }

@@ -114,19 +114,19 @@ export function findMotoByFilter(db, filter) {
     } else {
       const error = {
         error: 'Missing parameters',
-        description: "You need to pass a db and a filter as parameters"
+        description: "You need to pass a db, a filter and a projection as parameters"
       };
       reject(error);
     }
   });
 }
 
-export function findMotosByFilter(db, filter) {
+export function findMotosByFilter(db, filter, projection) {
   console.log("-> calling function findMotosByFilter in MotosModel");
   return new Promise((resolve, reject) => {
-    if (db && filter) {
+    if (db && filter && projection) {
       let motosCollection = db.collection('motos');
-      motosCollection.find(filter).toArray((error, motos) => {
+      motosCollection.find(filter, projection).toArray((error, motos) => {
         if(error){
           reject({error: 'Database error', description: error});
         }else{
@@ -136,7 +136,7 @@ export function findMotosByFilter(db, filter) {
     } else {
       const error = {
         error: 'Missing parameters',
-        description: "You need to pass a db and a filter as parameters"
+        description: "You need to pass a db and, a filter and a projection as parameters"
       };
       reject(error);
     }

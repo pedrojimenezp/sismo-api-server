@@ -24,11 +24,11 @@ export function usernameAlreadyExist(db, username) {
   });
 }
 
-export function findAllUsers(db) {
+export function findUsers(db) {
   console.log("-> calling function findAllUsers in UsersModel");
   return new Promise((resolve, reject) => {
     let usersCollection = db.collection('users');
-    usersCollection.find().toArray((error, docs) => {
+    usersCollection.find({},{"account.password":0, _id:0}).toArray((error, docs) => {
       if(error){
         reject({type: APIConstants.DATABASE_ERROR, error: error});
       }else{
