@@ -3,7 +3,6 @@
 import APIConstants from '../constants/APIConstants';
 import co from 'co';
 import polyfill from 'babel/polyfill';
-import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import shortid  from 'shortid';
 

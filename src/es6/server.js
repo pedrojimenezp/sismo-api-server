@@ -10,7 +10,6 @@ import favicon from 'serve-favicon';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import swig from 'swig';
-import r from 'rethinkdb';
 import MongoClient from 'mongodb';
 import multipart from 'connect-multiparty';
 import ApiRoutes from './routes/ApiRoutes';

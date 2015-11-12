@@ -1,13 +1,10 @@
 "use strict";
 import express from 'express';
-import jwt from "jsonwebtoken";
 //const router = express.Router();
 
 import UsersControllers from '../controllers/UsersController';
 import MotosControllers from '../controllers/MotosController';
 import TokensControllers from '../controllers/TokensController';
-import SessionControllers from '../controllers/SessionController';
-import NotificationsControllers from '../controllers/NotificationsController';
 import Middlewares from '../helpers/Middlewares';
 import config from '../config/config';
 import * as httpResponses from '../helpers/httpResponses';
@@ -20,9 +17,7 @@ export default class ApiRoutes {
     this.middlewares = new Middlewares(db);
     this.usersControllers = new UsersControllers(db);
     this.motosControllers = new MotosControllers(db);
-    this.sessionControllers = new SessionControllers(db);
     this.tokensControllers = new TokensControllers(db);
-    this.notificationsControllers = new NotificationsControllers(db);
     this.makeRoutes();
   }
 

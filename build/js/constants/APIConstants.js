@@ -1,0 +1,25 @@
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+var APIConstants = {
+  MISSING_PARAMETERS: 'MISSING_PARAMETERS',
+  BAD_REQUEST: 'BAD_REQUEST',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  CONFLICT: 'CONFLICT',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  DATABASE_ERROR: 'DATABASE_ERROR',
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  CREATED: 'CREATED',
+  UPDATED: 'UPDATED',
+  LOGOUT_SUCCESS: 'LOGOUT_SUCCESS',
+  NOT_FOUND: 'NOT_FOUND',
+  OK: 'OK',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  TOKEN_INVALID: 'TOKEN_INVALID',
+  TOKEN_VALID: 'TOKEN_VALID'
+};
+
+exports['default'] = APIConstants;
+module.exports = exports['default'];
