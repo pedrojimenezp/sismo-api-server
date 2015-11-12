@@ -33,6 +33,10 @@ export default class ApiRoutes {
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       next();
     });
+
+    this.app.get('/', (req, res) => {
+      res.render("index.html");
+    });
     
     this.app.post('/api/v1/login', (req, res) => this.usersControllers.login(req, res));
     

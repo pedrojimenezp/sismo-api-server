@@ -30,7 +30,7 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: false }));
 app.use(multipartMiddleware);
 app.use(cookieParser());
-app.use("/static", express.static(path.join(__dirname, '/../client/static')));
+app.use("/static", express.static(path.join(__dirname, '/../../client/static')));
 //app.use('/static', express.static('public'));
 
 
@@ -39,7 +39,7 @@ app.use("/static", express.static(path.join(__dirname, '/../client/static')));
 */
 app.engine('html', swig.renderFile);
 app.set('view engine', 'html');
-app.set('views', __dirname + '/../client/views');
+app.set('views', __dirname + '/../../client/views');
 
 app.set('view cache', false);
 swig.setDefaults({ cache: false });
