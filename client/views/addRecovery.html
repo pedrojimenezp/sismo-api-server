@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SisMo | Agragar recuperacion</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+
+    <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css" type="text/css">
+
+    <!--<link rel="stylesheet" href="/static/css/creative.css" type="text/css">-->
+
+    <style type="text/css">
+        body{
+            padding-top: 60px;
+        }
+
+        .formulario{
+            padding: 20px;
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+        }
+
+        .tarjeta{
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+            padding: 0;
+            margin-bottom:20px;
+        }
+
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/">SisMo</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/{{username}}/motos">Mis motos</a></li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Registros <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/{{username}}/thefts">Mis registros de robos</a></li>
+                            <li><a href="/{{username}}/recoveries">Mis registros de recuperaciones</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{username}} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/logout">Cerrar sesion</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row" style="margin-top:20px">
+            <div class="col-xs-12 col-sm-4 col-sm-offset-4 col-md-4 col-md-offset-4" style="margin-bottom:20px;">
+                <div class="formulario">
+                    <form class="form-signin" action="/api/v1/users" method="post" id="formulario">
+                        <h2 class="form-signin-heading" style="margin-bottom:20px;">Agregar recuperacion</h2>
+                        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="theftId" value="{{theftId}}">
+                        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="userId" value="{{userId}}">
+                        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="username" value="{{username}}">
+                        
+                        <input class="form-control" type="text" placeholder="Pais" required autofocus style="margin-bottom:20px;" id="country">
+                        <input class="form-control" type="text" placeholder="Departamento" required style="margin-bottom:20px;" id="department">
+                        <input class="form-control" type="text" placeholder="Ciudad" required style="margin-bottom:20px;" id="city">
+                        <input class="form-control" type="text" placeholder="Direccion" required style="margin-bottom:20px;" id="address">
+                        <input class="form-control" type="date" placeholder="Fecha" required autofocus style="margin-bottom:20px;" id="date">
+
+                        <input class="btn btn-sm btn-primary btn-block" type="submit" value="Registrar recuperacion">
+                        <h4 style="padding:10px; background:#5cb85c; color:#fff; display:none" id="alerta1">Recuperacion registrada</h4>
+                        <h4 style="padding:10px; background:#5cb85c; color:#fff; display:none" id="alerta2">Error tratando de registrar la recuperacion</h4>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).on("ready", function(){
+
+            $("#formulario").on("submit", function(e){
+                e.preventDefault();
+                console.log("click");
+
+                var username = $("#username").val();
+                var userId = $("#userId").val();
+                var theftId = $("#theftId").val();
+                var country = $("#country").val();
+                var department = $("#department").val();
+                var city = $("#city").val();
+                var address = $("#address").val();
+                var date = $("#date").val().split("-");
+                var day = date[2];
+                var month = date[1];
+                var year = date[0];
+                console.log(userId);
+                console.log(theftId);
+                console.log(username);
+                console.log(country);
+                console.log(department);
+                console.log(city);
+                console.log(address);
+                console.log(date);
+                console.log(day);
+                console.log(month);
+                console.log(year);
+                $.ajax({
+                    url: "/api/v1/recoveries",
+                    type: "post",
+                    data: { 
+                        userId: userId,
+                        theftId: theftId,
+                        country: country,
+                        department: department,
+                        city: city,
+                        address: address,
+                        year: year,
+                        month: month,
+                        day: day
+                    },
+                    success: function(data) {
+                        console.log(data);
+                        if(data.code == 201){
+                            $("#alerta1").slideDown();
+                            setTimeout(function(){
+                                window.location.replace("/"+username+"/recoveries");
+                            }, 2000);
+                        }
+                    },
+                    error: function(data){
+                        $("#alerta2").slideDown();
+                        setTimeout(function(){  
+                            $("#alerta2").slideUp();
+                        }, 2000);
+                    }
+                });
+                
+            });
+
+        });
+    </script>
+</body>
+
+</html>

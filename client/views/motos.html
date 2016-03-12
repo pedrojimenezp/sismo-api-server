@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SisMo | Mis motos</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+
+    <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css" type="text/css">
+
+    <!--<link rel="stylesheet" href="/static/css/creative.css" type="text/css">-->
+
+    <style type="text/css">
+        body{
+            padding-top: 60px;
+        }
+
+        .formulario{
+            padding: 20px;
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+        }
+
+        .tarjeta{
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+            padding: 0;
+            margin-bottom:20px;
+        }
+
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/">SisMo</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="active"><a href="/{{username}}/motos">Mis motos</a></li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Registros <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/{{username}}/thefts">Mis registros de robos</a></li>
+                            <li><a href="/{{username}}/recoveries">Mis registros de recuperaciones</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{username}} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/logout">Cerrar sesion</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row" style="margin-top:20px">
+            <div class="col-xs-12 col-sm-4 col-md-3" style="margin-bottom:20px;">
+                <div class="formulario">
+                    <form class="form-signin" action="/api/v1/users" method="post" id="formulario">
+                        <h2 class="form-signin-heading" style="margin-bottom:20px;">Agregar moto</h2>
+                        <h4 style="padding:10px; background:#d9534f; color:#fff; display:none" id="alerta1">Mac ya registrada</h4>
+                        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="userId" value="{{userId}}">
+                        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="username" value="{{username}}">
+                        <input class="form-control" type="text" placeholder="Mac" required autofocus style="margin-bottom:20px;" id="mac">
+                        <input class="form-control" type="text" placeholder="Marca" required style="margin-bottom:20px;" id="brand">
+                        <input class="form-control" type="text" placeholder="Linea" required style="margin-bottom:20px;" id="line">
+                        <input class="form-control" type="number" placeholder="Cilindraje" required style="margin-bottom:20px;" id="cylinderCapacity">
+                        <input class="form-control" type="number" placeholder="Modelo" required style="margin-bottom:20px;" id="model">
+                        <input class="form-control" type="text" placeholder="Placa" required style="margin-bottom:20px;" id="placa">
+                        <input class="form-control" type="text" placeholder="Color" required style="margin-bottom:20px;" id="color">
+                        <input class="form-control" type="file" placeholder="Imagen" required style="margin-bottom:20px;" id="image">
+                        <input class="btn btn-sm btn-primary btn-block" type="submit" value="Agregar">
+                        <h4 style="padding:10px; background:#5cb85c; color:#fff; display:none" id="alerta3">Moto agregada</h4>
+                    </form>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-8 col-md-9">
+                {% for moto in motos %}
+                    <div class="col-xs-12 col-sm-6 col-md-4">
+                        <div class="col-xs-12 tarjeta">
+                            
+                            <div class="col-xs-12 col-md-12" style="">
+                                <img src="/api/v1/motos/{{moto.mac}}/image" alt="Foto" style="height: 200px; width:100%; margin:0;">
+                            </div>
+                            <div class="col-xs-12" style="text-align:center">
+                                <h4>{{moto.brand}} {{moto.line}} {{moto.cylinderCapacity}} model {{moto.model}}</h4>
+                            </div>
+                            <div class="col-xs-12" style="text-align:center">
+                                <div class="col-xs-6">
+                                    <p><span style="font-weight:bold;">Placa:</span> {{moto.plate}}</p>
+                                </div>
+                                <div class="col-xs-6">
+                                    <p><span style="font-weight:bold;">Color:</span> {{moto.color}}</p>
+                                </div>
+                            </div>
+                             <div class="col-xs-12" style="margin-bottom:20px; text-align:center">
+                                <div class="btn-group  btn-group-xs" role="group" aria-label="...">
+                                  <a class="btn btn-primary" href="/{{username}}/motos/{{moto.mac}}/update?brand={{moto.brand}}&line={{moto.line}}&cylinderCapacity={{moto.cylinderCapacity}}&model={{moto.model}}&plate={{moto.plate}}&color={{moto.color}}&">Actualizar</a>
+                                  <button type="button" class="btn btn-danger" onclick="eliminarMoto('{{moto.mac}}')">Eliminar</button>
+                                  <button type="button" class="btn btn-warning"onclick="registrarComoRobada('{{moto.mac}}')">R. como robada</button>
+                                </div>
+                                <h5 style="padding:10px; background:#5cb85c; color:#fff; display:none" id="alerta4">Moto registrada como robada</h5>
+                            </div>
+                        </div> 
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).on("ready", function(){
+
+            $("#formulario").on("submit", function(e){
+                e.preventDefault();
+                console.log("click");
+
+                var username = $("#username").val();
+                var userId = $("#userId").val();
+                var mac = $("#mac").val();
+                var brand = $("#brand").val();
+                var line = $("#line").val();
+                var cylinderCapacity = $("#cylinderCapacity").val();
+                var model = $("#model").val();
+                var placa = $("#placa").val();
+                var color = $("#color").val();
+
+                var input, file, fr, img;
+                input = document.getElementById('image');
+                file = input.files[0];
+                fr = new FileReader();
+                fr.onload = function () {
+                    var image = fr.result.split(",")[1];
+                    $.post("/api/v1/motos", { 
+                            userId: userId,
+                            mac: mac,
+                            brand: brand,
+                            line: line,
+                            cylinderCapacity: cylinderCapacity,
+                            model: model,
+                            plate: placa,
+                            color: color,
+                            image: image
+                    }).done(function(data) {
+                        console.log(data);
+                        if(data.code == 201){
+                            $("#alerta3").slideDown();
+                            setTimeout(function(){
+                                window.location.replace("/"+username+"/motos");
+                            }, 2000);
+                        }
+                    }).fail(function(data){
+                        console.log(data);
+                        if(data.responseJSON.code === 409){
+                            $("#alerta1").slideDown();
+                        }
+                    });
+                }
+                fr.readAsDataURL(file);
+            });
+
+        });
+        
+        function eliminarMoto(mac){
+            var confirmar = confirm("¿Esta seguro que dese eliminar esta moto?"); 
+            if (confirmar) {
+                var username = $("#username").val();
+                $.ajax({
+                    url: "/api/v1/motos/"+mac,
+                    type: "delete",
+                    success: function(data) {
+                        console.log(data);
+                        if(data.code == 200){
+                            setTimeout(function(){
+                                window.location.replace("/"+username+"/motos");
+                            }, 1000);
+                        }
+                    }
+                });
+            }
+            
+        }
+
+        function registrarComoRobada(mac) {
+            var confirmar = confirm("¿Esta seguro que dese registrar esta moto como robada?"); 
+            if (confirmar) {
+                var username = $("#username").val();
+                $.ajax({
+                    url: "/api/v1/thefts/"+mac,
+                    type: "post",
+                    success: function(data) {
+                        console.log(data);
+                        if(data.code == 201){
+                            $("#alerta4").slideDown();
+                            setTimeout(function(){
+                                $("#alerta4").slideUp();
+                            }, 2000);
+                        }
+                    },
+                    error: function(data){
+                        if(data.responseJSON.error.error === "Wrong parking position"){
+                            alert("La ulima posicion de parqueo de esta motocicleta no retorno un lugar valido, por lo tanto no se puede registrar esta moto como robada");
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

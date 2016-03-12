@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SisMo | Iniciar sesion</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+
+   <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css" type="text/css">
+
+    <link rel="stylesheet" href="/static/css/creative.css" type="text/css">
+
+    <style>
+        .formulario{
+            padding: 20px;
+            background: #fafafa;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+
+            color: #666;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/">SisMo</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/signup">Registrarse</a></li>
+                    <li><a href="/thefts">Robos</a></li>
+                    <li><a href="/recoveries">Recuperaciones</a></li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <header>
+        <div class="header-content">
+            <div class="header-content-inner">
+                <div class="container-fluid">
+                    <div class="ol-xs-12 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4">
+                        <div class="formulario">
+                            <form class="form-signin" action="/api/v1/login2" method="post">
+                                <h2 class="form-signin-heading" style="margin-bottom:20px;">Iniciar sesion</h2>
+                                {% if loginIncorrect %}
+                                    <h4 style="padding:10px; background:#d9534f; color:#fff">Usuario o contraseña incorrectos</h4>
+                                {% endif %}
+                                {% if username %}
+                                    <input class="form-control" type="text" name="username" placeholder="Nombre de usuario" required autofocus style="margin-bottom:20px;" value="{{username}}">
+                                {% else %}
+                                    <input class="form-control" type="text" name="username" placeholder="Nombre de usuario" required autofocus style="margin-bottom:20px;">
+                                {% endif %}
+                                <input class="form-control" type="password" name="password" placeholder="Contraseña" required style="margin-bottom:20px;">
+                                <div class="checkbox" style="margin-bottom:20px;">
+                                  <label>
+                                    <input type="checkbox" name="rememberMe"> Recordarme
+                                  </label>
+                                </div>
+                                <input class="btn btn-lg btn-primary btn-block" type="submit" value="Iniciar sesion">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SisMo | Mis recuperaciones</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+
+    <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css" type="text/css">
+
+    <!--<link rel="stylesheet" href="/static/css/creative.css" type="text/css">-->
+
+    <style type="text/css">
+        body{
+            padding-top: 60px;
+        }
+
+        .formulario{
+            padding: 20px;
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+        }
+
+        .tarjeta{
+            background: #fafafa;
+            box-shadow: 0px 0px 5px #666;
+            color: #666;
+            padding: 0;
+            margin-bottom:20px;
+        }
+
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/">SisMo</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/{{username}}/motos">Mis motos</a></li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Registros <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/{{username}}/thefts">Mis registros de robos</a></li>
+                            <li  class="active"><a href="/{{username}}/recoveries">Mis registros de recuperaciones</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{username}} <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/logout">Cerrar sesion</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12" style="text-align:center; text-shadow:0px 0px 5px #ccc">
+                <h2>Mis registros de recuperaciones</h2>
+            </div>
+        </div>
+        <input class="form-control" type="hidden" required style="margin-bottom:20px;" id="username" value="{{username}}">
+        <div class="row" style="margin-top:20px">
+            <div class="col-xs-12 col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-striped" style="box-shadow:0px 0px 10px #aaa">
+                        <thead>
+                            <tr class="info">
+                                <th style="text-align:center" colspan="4">Moto</th>
+                                <th style="text-align:center" colspan="4">Lugar donde se recupero</th>
+                                <th style="text-align:center" rowspan="2">Fecha</th>
+                                <th style="text-align:center" rowspan="2" colspan="2">Accion</th>
+                            </tr>
+                            <tr class="info">
+                                <th style="text-align:center">Nombre</th>
+                                <th style="text-align:center">Modelo</th>
+                                <th style="text-align:center">Placa</th>
+                                <th style="text-align:center">Color</th>
+                                <th style="text-align:center">Direccion</th>
+                                <th style="text-align:center">Ciudad</th>
+                                <th style="text-align:center">Departamento</th>
+                                <th style="text-align:center">Pais</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for recovery in recoveries %}
+                                <tr>
+                                    <th style="text-align:center">{{recovery.moto.brand}} {{recovery.moto.line}} {{recovery.moto.cylinderCapacity}}</th>
+                                    <th style="text-align:center">{{recovery.moto.model}}</th>
+                                    <th style="text-align:center">{{recovery.moto.plate}}</th>
+                                    <th style="text-align:center">{{recovery.moto.color}}</th>
+                                    <th style="text-align:center">{{recovery.location.address}}</th>
+                                    <th style="text-align:center">{{recovery.location.city}}</th>
+                                    <th style="text-align:center">{{recovery.location.department}}</th>
+                                    <th style="text-align:center">{{recovery.location.country}}</th>
+                                    <th style="text-align:center">{{recovery.date.day}}/{{recovery.date.month}}/{{recovery.date.year}}</th>
+                                    <th style="text-align:center"><a type="" class="btn btn-xs btn-primary" href="/{{username}}/thefts?theftId={{recovery.theftId}}">Ver robo asociado</a></th>
+                                    <th style="text-align:center"><button type="" class="btn btn-xs btn-danger" onclick="eliminar('{{recovery.id}}')">Eliminar</button></th>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xs-12" style="text-align:center; text-shadow:0px 0px 5px #ccc">
+                <nav>
+                  <ul class="pagination">
+                    {% if (skip-10) <= 0 %}
+                        <li class="disabled">
+                            <a href="#" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo; Anterior</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li>
+                            <a href="/{{username}}/recoveries?skip={{skip-10}}" aria-label="Anterior">
+                                <span aria-hidden="true">&laquo; Anterior</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if (skip+10) >= count %}
+                        <li class="disabled">
+                            <a href="#" aria-label="Siguiente">
+                                <span aria-hidden="true">Siguiente &raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li>
+                            <a href="/{{username}}/recoveries?skip={{skip+10}}" aria-label="Siguiente">
+                                <span aria-hidden="true">Siguiente &raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                  </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <script>
+        
+        function eliminar(id){
+            var confirmar = confirm("¿Esta seguro que dese eliminar este registro?"); 
+            if (confirmar) {
+                var username = $("#username").val();
+                $.ajax({
+                    url: "/api/v1/recoveries/"+id,
+                    type: "delete",
+                    success: function(data) {
+                        console.log(data);
+                        if(data.code == 200){
+                            setTimeout(function(){
+                                window.location.replace("/"+username+"/recoveries");
+                            }, 1000);
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

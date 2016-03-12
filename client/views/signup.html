@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>SisMo | Registrarse</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css">
+
+   <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css" type="text/css">
+ 
+    <link rel="stylesheet" href="/static/css/creative.css" type="text/css">
+
+    <style>
+        .formulario{
+            padding: 20px;
+            background: #fafafa;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+
+            color: #666;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/">SisMo</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/signin">Iniciar sesion</a></li>
+                    <li><a href="/thefts">Robos</a></li>
+                    <li><a href="/recoveries">Recuperaciones</a></li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+    <header>
+        <div class="header-content">
+            <div class="header-content-inner">
+                <div class="container-fluid">
+                    <div class="col-xs-12 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4">
+                        <div class="formulario">
+                            <form class="form-signin" action="/api/v1/users" method="post" id="formulario">
+                                <h2 class="form-signin-heading" style="margin-bottom:20px;">Registrarse</h2>
+                                <h4 style="padding:10px; background:#d9534f; color:#fff; display:none" id="alerta1">Nombre de usuario ya registrado</h4>
+                                <input class="form-control" type="text" placeholder="Nombre de usuario" required autofocus style="margin-bottom:20px;" id="username">
+                                <input class="form-control" type="password" placeholder="Contraseña" required style="margin-bottom:20px;" id="password1">
+                                <input class="form-control" type="password" placeholder="Repetir contraseña" required style="margin-bottom:20px;" id="password2">
+                                <h4 style="padding:10px; background:#d9534f; color:#fff; display:none" id="alerta2">Contraseñas no coinciden</h4>
+                                
+                                <input class="btn btn-lg btn-primary btn-block" type="submit" value="Registrarme">
+                                <h4 style="padding:10px; background:#5cb85c; color:#fff; display:none" id="alerta3">Registro exitoso</h4>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).on("ready", function(){
+            $("#formulario").on("submit", function(e){
+                $("#alerta1").slideUp();
+                $("#alerta2").slideUp();
+                e.preventDefault();
+                var username = $("#username").val();
+                var password1 = $("#password1").val();
+                var password2 = $("#password2").val();
+                console.log(username);
+                console.log(password1);
+                console.log(password2);
+                if(password1 !== password2){
+                    $("#alerta2").slideDown();
+                }else{
+                    $.post("/api/v1/users", { username: username, password: password1 })
+                      .done(function(data) {
+                        console.log(data);
+                        if(data.code == 201){
+                            $("#alerta3").slideDown();
+                            setTimeout(function(){
+                                window.location.replace("/");
+                            }, 2000);
+                        }
+                    }).fail(function(data){
+                        console.log(data);
+                        if(data.responseJSON.code === 409){
+                            $("#alerta1").slideDown();
+                        }
+                    })
+                }
+                
+            });
+        })
+    </script>
+
+</body>
+
+</html>
