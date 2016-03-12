@@ -4,7 +4,7 @@ import APIConstants from '../constants/APIConstants';
 
 let dev = true;
 
-export function Ok(res, result){
+export function ok(res, result){
   let response = {
     code: 200,
     status: 'Ok',
@@ -13,7 +13,7 @@ export function Ok(res, result){
   res.status(response.code).send(response);
 }
 
-export function Created(res, result){
+export function created(res, result){
   let response = {
     code: 201,
     status: 'Created',
@@ -33,6 +33,7 @@ export function internalServerError(res, error){
 }
 
 export function badRequest(res, error) {
+  console.log(error);
   let response = {
     code: 400,
     status: 'Bad request',
@@ -42,6 +43,7 @@ export function badRequest(res, error) {
 }
 
 export function unauthorized(res, error) {
+  console.log(error);
   let response = {
     code: 401,
     status: 'Unauthorized',
@@ -51,6 +53,7 @@ export function unauthorized(res, error) {
 }
 
 export function notFound(res, error) {
+  console.log(error);
   let response = {
     code: 404,
     status: 'Not found',
@@ -60,6 +63,7 @@ export function notFound(res, error) {
 }
 
 export function conflict(res, error) {
+  console.log(error);
   let response = {
     code: 409,
     status: 'Conflict',

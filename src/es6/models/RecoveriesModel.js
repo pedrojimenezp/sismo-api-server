@@ -9,15 +9,22 @@ Recoveries have this info
 
 recoveries = {
   id: ObjectId,
+  userId: ObjectId,
+  moto: {
+    mac: string,
+    brand: string,
+    line: string,
+    model: int,
+    plate: string,
+    color: string,
+    cylinderCapacity: int
+  },
   theftId: ObjectId,
   location: {
-    latitude: string,
-    longitude: string,
     country: string,
     department: string,
     city: string,
-    neighborhood: string,
-    address: string,
+    address: string
   },
   date: {
     year: int,
@@ -49,12 +56,12 @@ export function insertRecovery(db, recovery) {
   });
 }
 
-export function findRecoveriesByFilter(db, filter, sort, limit) {
+export function findRecoveriesByFilter(db, filter, sort, skip, limit) {
   console.log("-> calling function findRecoveriesByFilter in RecoveriesModel");
   return new Promise((resolve, reject) => {
     if (db && filter) {
       let recoveriesCollection = db.collection('recoveries');
-      recoveriesCollection.find(filter).sort(sort).limit(limit).toArray((error, recoveries) => {
+      recoveriesCollection.find(filter).sort(sort).skip(skip).limit(limit).toArray((error, recoveries) => {
         if(error){
           reject({type: APIConstants.DATABASE_ERROR, error: error});
         }else{
@@ -65,6 +72,28 @@ export function findRecoveriesByFilter(db, filter, sort, limit) {
       const error = {
         type: APIConstants.MISSING_PARAMETERS,
         error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+export function deleteRecoveriesByFilter(db, filter) {
+  console.log("-> calling function deleteRecoveriesByFilter in TheftModel"); 
+  return new Promise((resolve, reject) => {
+    if (db && filter) {
+      let recoveriesCollection = db.collection('recoveries');
+      recoveriesCollection.remove(filter, (error, result) => {
+        if(error){
+          reject({type: APIConstants.DATABASE_ERROR, error: error});
+        }else{
+          resolve(result);
+        }
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to db and filter as parameters"
       };
       reject(error);
     }

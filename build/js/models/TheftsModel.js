@@ -4,7 +4,9 @@ Object.defineProperty(exports, '__esModule', {
   value: true
 });
 exports.insertTheft = insertTheft;
-exports.getTheftsByFilter = getTheftsByFilter;
+exports.findTheftByFilter = findTheftByFilter;
+exports.findTheftsByFilter = findTheftsByFilter;
+exports.deleteTheftsByFilter = deleteTheftsByFilter;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -33,7 +35,9 @@ Thefts have this info
 
 thefts = {
   id: ObjectId,
-  motoInfo: {
+  userId: ObjectId,
+  moto: {
+    mac: string,
     brand: string,
     line: string,
     model: int,
@@ -47,7 +51,6 @@ thefts = {
     country: string,
     department: string,
     city: string,
-    neighborhood: string,
     address: string,
   },
   date: {
@@ -80,12 +83,12 @@ function insertTheft(db, theft) {
   });
 }
 
-function getTheftsByFilter(db, filter) {
-  console.log("-> calling function getTheftsByFilter in TheftModel");
+function findTheftByFilter(db, filter) {
+  console.log("-> calling function findTheftByFilter in TheftModel");
   return new Promise(function (resolve, reject) {
     if (db && filter) {
       var theftsCollection = db.collection('thefts');
-      theftsCollection.find(filter).toArray(function (error, thefts) {
+      theftsCollection.findOne(filter, function (error, thefts) {
         if (error) {
           reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
         } else {
@@ -96,6 +99,50 @@ function getTheftsByFilter(db, filter) {
       var error = {
         type: _constantsAPIConstants2['default'].MISSING_PARAMETERS,
         error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+function findTheftsByFilter(db, filter, sort, skip, limit) {
+  console.log("-> calling function getTheftsByFilter in TheftModel");
+  return new Promise(function (resolve, reject) {
+    if (db && filter) {
+      var theftsCollection = db.collection('thefts');
+      theftsCollection.find(filter).sort(sort).skip(skip).limit(limit).toArray(function (error, thefts) {
+        if (error) {
+          reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
+        } else {
+          resolve(thefts);
+        }
+      });
+    } else {
+      var error = {
+        type: _constantsAPIConstants2['default'].MISSING_PARAMETERS,
+        error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+function deleteTheftsByFilter(db, filter) {
+  console.log("-> calling function deleteTheftByFilter in TheftModel");
+  return new Promise(function (resolve, reject) {
+    if (db && filter) {
+      var theftsCollection = db.collection('thefts');
+      theftsCollection.remove(filter, function (error, result) {
+        if (error) {
+          reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
+        } else {
+          resolve(result);
+        }
+      });
+    } else {
+      var error = {
+        type: _constantsAPIConstants2['default'].MISSING_PARAMETERS,
+        error: "You need to db and filter as parameters"
       };
       reject(error);
     }

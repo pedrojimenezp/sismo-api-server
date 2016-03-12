@@ -5,6 +5,7 @@ Object.defineProperty(exports, '__esModule', {
 });
 exports.insertRecovery = insertRecovery;
 exports.findRecoveriesByFilter = findRecoveriesByFilter;
+exports.deleteRecoveriesByFilter = deleteRecoveriesByFilter;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -33,15 +34,22 @@ Recoveries have this info
 
 recoveries = {
   id: ObjectId,
+  userId: ObjectId,
+  moto: {
+    mac: string,
+    brand: string,
+    line: string,
+    model: int,
+    plate: string,
+    color: string,
+    cylinderCapacity: int
+  },
   theftId: ObjectId,
   location: {
-    latitude: string,
-    longitude: string,
     country: string,
     department: string,
     city: string,
-    neighborhood: string,
-    address: string,
+    address: string
   },
   date: {
     year: int,
@@ -73,12 +81,12 @@ function insertRecovery(db, recovery) {
   });
 }
 
-function findRecoveriesByFilter(db, filter, sort, limit) {
+function findRecoveriesByFilter(db, filter, sort, skip, limit) {
   console.log("-> calling function findRecoveriesByFilter in RecoveriesModel");
   return new Promise(function (resolve, reject) {
     if (db && filter) {
       var recoveriesCollection = db.collection('recoveries');
-      recoveriesCollection.find(filter).sort(sort).limit(limit).toArray(function (error, recoveries) {
+      recoveriesCollection.find(filter).sort(sort).skip(skip).limit(limit).toArray(function (error, recoveries) {
         if (error) {
           reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
         } else {
@@ -89,6 +97,28 @@ function findRecoveriesByFilter(db, filter, sort, limit) {
       var error = {
         type: _constantsAPIConstants2['default'].MISSING_PARAMETERS,
         error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+function deleteRecoveriesByFilter(db, filter) {
+  console.log("-> calling function deleteRecoveriesByFilter in TheftModel");
+  return new Promise(function (resolve, reject) {
+    if (db && filter) {
+      var recoveriesCollection = db.collection('recoveries');
+      recoveriesCollection.remove(filter, function (error, result) {
+        if (error) {
+          reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
+        } else {
+          resolve(result);
+        }
+      });
+    } else {
+      var error = {
+        type: _constantsAPIConstants2['default'].MISSING_PARAMETERS,
+        error: "You need to db and filter as parameters"
       };
       reject(error);
     }

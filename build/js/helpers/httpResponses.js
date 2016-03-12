@@ -3,8 +3,8 @@
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
-exports.Ok = Ok;
-exports.Created = Created;
+exports.ok = ok;
+exports.created = created;
 exports.internalServerError = internalServerError;
 exports.badRequest = badRequest;
 exports.unauthorized = unauthorized;
@@ -19,7 +19,7 @@ var _constantsAPIConstants2 = _interopRequireDefault(_constantsAPIConstants);
 
 var dev = true;
 
-function Ok(res, result) {
+function ok(res, result) {
   var response = {
     code: 200,
     status: 'Ok',
@@ -28,7 +28,7 @@ function Ok(res, result) {
   res.status(response.code).send(response);
 }
 
-function Created(res, result) {
+function created(res, result) {
   var response = {
     code: 201,
     status: 'Created',
@@ -48,6 +48,7 @@ function internalServerError(res, error) {
 }
 
 function badRequest(res, error) {
+  console.log(error);
   var response = {
     code: 400,
     status: 'Bad request',
@@ -57,6 +58,7 @@ function badRequest(res, error) {
 }
 
 function unauthorized(res, error) {
+  console.log(error);
   var response = {
     code: 401,
     status: 'Unauthorized',
@@ -66,6 +68,7 @@ function unauthorized(res, error) {
 }
 
 function notFound(res, error) {
+  console.log(error);
   var response = {
     code: 404,
     status: 'Not found',
@@ -75,6 +78,7 @@ function notFound(res, error) {
 }
 
 function conflict(res, error) {
+  console.log(error);
   var response = {
     code: 409,
     status: 'Conflict',

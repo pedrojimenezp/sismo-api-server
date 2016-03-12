@@ -28,6 +28,10 @@ var _cookieParser = require('cookie-parser');
 
 var _cookieParser2 = _interopRequireDefault(_cookieParser);
 
+var _expressSession = require('express-session');
+
+var _expressSession2 = _interopRequireDefault(_expressSession);
+
 var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
@@ -62,6 +66,7 @@ app.use((0, _morgan2['default'])('dev'));
 app.use(_bodyParser2['default'].json({ limit: '50mb' }));
 app.use(_bodyParser2['default'].urlencoded({ limit: '50mb', extended: false }));
 app.use(multipartMiddleware);
+app.use((0, _expressSession2['default'])({ secret: 'secret', cookie: {} }));
 app.use((0, _cookieParser2['default'])());
 app.use("/static", _express2['default']['static'](_path2['default'].join(__dirname, '/../../client/static')));
 //app.use('/static', express.static('public'));
@@ -92,7 +97,7 @@ var mongodbUrl = 'mongodb://admin:1q2w3e4r@ds031098.mongolab.com:31098/sismo-api
 _mongodb2['default'].connect(mongodbUrl, function (error, db) {
   if (error) {
     console.log(error);
-    console.log('Error trying to connect to SisMo database rethinkdb on ' + mongodbUrl);
+    console.log('Error trying to connect to SisMo database on ' + mongodbUrl);
   } else {
     (function () {
       console.log("Connected correctly to server.");
@@ -115,3 +120,20 @@ _mongodb2['default'].connect(mongodbUrl, function (error, db) {
     })();
   }
 });
+/*
+let db;
+new ApiRoutes(app, db);
+
+  let port = process.env.PORT || '4000';
+  app.set('port', port);
+
+  let server = http.createServer(app);
+
+  server.listen(port);
+  server.on('error', function(error) {
+    console.error(error);
+  });
+
+  server.on('listening', function() {
+    console.log(`HTTP server is listening in localhost:${port}`);
+  });*/

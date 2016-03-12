@@ -25,9 +25,17 @@ var _controllersMotosController = require('../controllers/MotosController');
 
 var _controllersMotosController2 = _interopRequireDefault(_controllersMotosController);
 
-var _controllersTokensController = require('../controllers/TokensController');
+var _controllersViewsController = require('../controllers/ViewsController');
 
-var _controllersTokensController2 = _interopRequireDefault(_controllersTokensController);
+var _controllersViewsController2 = _interopRequireDefault(_controllersViewsController);
+
+var _controllersTheftsController = require('../controllers/TheftsController');
+
+var _controllersTheftsController2 = _interopRequireDefault(_controllersTheftsController);
+
+var _controllersRecoveriesController = require('../controllers/RecoveriesController');
+
+var _controllersRecoveriesController2 = _interopRequireDefault(_controllersRecoveriesController);
 
 var _helpersMiddlewares = require('../helpers/Middlewares');
 
@@ -49,15 +57,21 @@ var _constantsAPIConstants = require('../constants/APIConstants');
 
 var _constantsAPIConstants2 = _interopRequireDefault(_constantsAPIConstants);
 
+var _co = require('co');
+
+var _co2 = _interopRequireDefault(_co);
+
 var ApiRoutes = (function () {
   function ApiRoutes(app, db) {
     _classCallCheck(this, ApiRoutes);
 
     this.app = app;
     this.middlewares = new _helpersMiddlewares2['default'](db);
-    this.usersControllers = new _controllersUsersController2['default'](db);
-    this.motosControllers = new _controllersMotosController2['default'](db);
-    this.tokensControllers = new _controllersTokensController2['default'](db);
+    this.usersController = new _controllersUsersController2['default'](db);
+    this.motosController = new _controllersMotosController2['default'](db);
+    this.theftsController = new _controllersTheftsController2['default'](db);
+    this.recoveriesController = new _controllersRecoveriesController2['default'](db);
+    this.viewsController = new _controllersViewsController2['default'](db);
     this.makeRoutes();
   }
 
@@ -74,55 +88,122 @@ var ApiRoutes = (function () {
       });
 
       this.app.get('/', function (req, res) {
-        res.render("index.html");
+        return _this.viewsController.renderIndex(req, res);
+      });
+      this.app.get('/thefts', function (req, res) {
+        return _this.viewsController.renderThefts(req, res);
+      });
+      this.app.get('/recoveries', function (req, res) {
+        return _this.viewsController.renderRecoveries(req, res);
+      });
+
+      this.app.get('/error', function (req, res) {
+        return _this.viewsController.renderError(req, res);
+      });
+
+      this.app.get('/:username/motos', function (req, res) {
+        return _this.viewsController.renderUserMotos(req, res);
+      });
+
+      this.app.get('/:username/motos/:mac/update', function (req, res) {
+        return _this.viewsController.renderUpdateUserMotos(req, res);
+      });
+
+      this.app.get('/:username/thefts', function (req, res) {
+        return _this.viewsController.renderUserThefts(req, res);
+      });
+
+      this.app.get('/:username/recoveries', function (req, res) {
+        return _this.viewsController.renderUserRecoveries(req, res);
+      });
+
+      this.app.get('/:username/recoveries/add', function (req, res) {
+        return _this.viewsController.renderAddUserRecoveries(req, res);
+      });
+
+      this.app.get('/signin', function (req, res) {
+        return _this.viewsController.renderSignin(req, res);
+      });
+
+      this.app.get('/signup', function (req, res) {
+        return _this.viewsController.renderSignup(req, res);
+      });
+
+      this.app.get('/logout', function (req, res) {
+        req.session.destroy();
+        res.cookie("isLogged", false);
+        res.redirect('/');
       });
 
       this.app.post('/api/v1/login', function (req, res) {
-        return _this.usersControllers.login(req, res);
+        return _this.usersController.login(req, res);
+      });
+      this.app.post('/api/v1/login2', function (req, res) {
+        return _this.usersController.login2(req, res);
       });
 
       this.app.post('/api/v1/users', function (req, res) {
-        return _this.usersControllers.insertUser(req, res);
+        return _this.usersController.insertUser(req, res);
       });
 
       this.app.get('/api/v1/users', function (req, res) {
-        return _this.usersControllers.getUsers(req, res);
+        return _this.usersController.getUsers(req, res);
       });
 
       this.app.get('/api/v1/users/:username', function (req, res) {
-        return _this.usersControllers.getUserByUsername(req, res);
+        return _this.usersController.getUserByUsername(req, res);
       });
 
       this.app.post('/api/v1/motos', function (req, res) {
-        return _this.motosControllers.insertMoto(req, res);
+        return _this.motosController.insertMoto(req, res);
       });
 
       this.app.get('/api/v1/motos', function (req, res) {
-        return _this.motosControllers.getMotos(req, res);
+        return _this.motosController.getMotos(req, res);
       });
 
       this.app.get('/api/v1/motos/:mac', function (req, res) {
-        return _this.motosControllers.getMotoByMac(req, res);
+        return _this.motosController.getMotoByMac(req, res);
       });
 
       this.app.put('/api/v1/motos/:mac', function (req, res) {
-        return _this.motosControllers.updateMotoByMac(req, res);
+        return _this.motosController.updateMotoByMac(req, res);
       });
 
       this.app['delete']('/api/v1/motos/:mac', function (req, res) {
-        return _this.motosControllers.deleteMotoByMac(req, res);
+        return _this.motosController.deleteMotoByMac(req, res);
       });
 
       this.app.get('/api/v1/motos/:mac/image', function (req, res) {
-        return _this.motosControllers.getMotoImageByMac(req, res);
+        return _this.motosController.getMotoImageByMac(req, res);
+      });
+
+      this.app.get('/api/v1/motos/:mac/status', function (req, res) {
+        return _this.motosController.getMotoStatusByMac(req, res);
       });
 
       this.app.put('/api/v1/motos/:mac/status', function (req, res) {
-        return _this.motosControllers.updateMotoStatusByMac(req, res);
+        return _this.motosController.updateMotoStatusByMac(req, res);
       });
 
-      this.app.get('/api/v1/verification/access-token', function (req, res) {
-        return _this.tokensControllers.verifyAccessToken(req, res);
+      this.app.get('/api/v1/thefts', function (req, res) {
+        return _this.theftsController.getThefts(req, res);
+      });
+
+      this.app.post('/api/v1/thefts/:motoMac', function (req, res) {
+        return _this.theftsController.insertTheftsByMac(req, res);
+      });
+
+      this.app['delete']('/api/v1/thefts/:id', function (req, res) {
+        return _this.theftsController.deleteTheftById(req, res);
+      });
+
+      this.app.post('/api/v1/recoveries', function (req, res) {
+        return _this.recoveriesController.insertRecovery(req, res);
+      });
+
+      this.app['delete']('/api/v1/recoveries/:id', function (req, res) {
+        return _this.recoveriesController.deleteRecoveryById(req, res);
       });
     }
   }]);

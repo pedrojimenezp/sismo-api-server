@@ -9,7 +9,9 @@ Thefts have this info
 
 thefts = {
   id: ObjectId,
-  motoInfo: {
+  userId: ObjectId,
+  moto: {
+    mac: string,
     brand: string,
     line: string,
     model: int,
@@ -23,7 +25,6 @@ thefts = {
     country: string,
     department: string,
     city: string,
-    neighborhood: string,
     address: string,
   },
   date: {
@@ -56,13 +57,12 @@ export function insertTheft(db, theft) {
   });
 }
 
-
-export function getTheftsByFilter(db, filter) {
-  console.log("-> calling function getTheftsByFilter in TheftModel");
+export function findTheftByFilter(db, filter) {
+  console.log("-> calling function findTheftByFilter in TheftModel");
   return new Promise((resolve, reject) => {
     if (db && filter) {
       let theftsCollection = db.collection('thefts');
-      theftsCollection.find(filter).toArray((error, thefts) => {
+      theftsCollection.findOne(filter, (error, thefts) => {
         if(error){
           reject({type: APIConstants.DATABASE_ERROR, error: error});
         }else{
@@ -73,6 +73,50 @@ export function getTheftsByFilter(db, filter) {
       const error = {
         type: APIConstants.MISSING_PARAMETERS,
         error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+export function findTheftsByFilter(db, filter, sort, skip, limit) {
+  console.log("-> calling function getTheftsByFilter in TheftModel");
+  return new Promise((resolve, reject) => {
+    if (db && filter) {
+      let theftsCollection = db.collection('thefts');
+      theftsCollection.find(filter).sort(sort).skip(skip).limit(limit).toArray((error, thefts) => {
+        if(error){
+          reject({type: APIConstants.DATABASE_ERROR, error: error});
+        }else{
+          resolve(thefts);
+        }
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to pass a db and a filter as parameters"
+      };
+      reject(error);
+    }
+  });
+}
+
+export function deleteTheftsByFilter(db, filter) {
+  console.log("-> calling function deleteTheftByFilter in TheftModel"); 
+  return new Promise((resolve, reject) => {
+    if (db && filter) {
+      let theftsCollection = db.collection('thefts');
+      theftsCollection.remove(filter, (error, result) => {
+        if(error){
+          reject({type: APIConstants.DATABASE_ERROR, error: error});
+        }else{
+          resolve(result);
+        }
+      });
+    } else {
+      const error = {
+        type: APIConstants.MISSING_PARAMETERS,
+        error: "You need to db and filter as parameters"
       };
       reject(error);
     }

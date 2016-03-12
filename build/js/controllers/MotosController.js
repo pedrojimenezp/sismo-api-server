@@ -87,7 +87,7 @@ var MotosController = (function () {
                 moto = context$3$0.sent;
 
                 if (moto) {
-                  context$3$0.next = 23;
+                  context$3$0.next = 21;
                   break;
                 }
 
@@ -105,7 +105,9 @@ var MotosController = (function () {
                   status: {
                     monitoring: "off",
                     safetyLock: "unlocked",
-                    electricalFlow: "unlocked"
+                    electricalFlow: "unlocked",
+                    parkingLatitude: 0,
+                    parkingLongitude: 0
                   }
                 };
 
@@ -129,37 +131,32 @@ var MotosController = (function () {
                 }
                 if (req.body.image) {
                   newMoto.image = req.body.image;
+                  if (req.body.imageEncodeType) {
+                    newMoto.imageEncodeType = req.body.imageEncodeType;
+                  } else {
+                    newMoto.imageEncodeType = "base64_default";
+                  }
                 }
-                if (req.body.imageEncodeType) {
-                  newMoto.imageEncodeType = req.body.imageEncodeType;
-                }
-                context$3$0.next = 16;
+                context$3$0.next = 15;
                 return motosModel.insertMoto(self.db, newMoto);
 
-              case 16:
+              case 15:
                 result = context$3$0.sent;
                 motoInserted = result.ops[0];
 
                 delete motoInserted.image;
-                response = {
-                  code: 201,
-                  status: 'Created',
-                  result: {
-                    moto: motoInserted
-                  }
-                };
-                res.status(response.code).send(response);
-                context$3$0.next = 25;
+                httpResponses.created(res, { moto: motoInserted });
+                context$3$0.next = 23;
                 break;
 
-              case 23:
+              case 21:
                 errorResponse = {
                   error: "Mac already exist",
                   description: "The the mac you want to register already registered, you have to send another"
                 };
                 httpResponses.conflict(res, errorResponse);
 
-              case 25:
+              case 23:
               case 'end':
                 return context$3$0.stop();
             }
@@ -222,16 +219,9 @@ var MotosController = (function () {
             case 2:
               motos = context$3$0.sent;
 
-              response = {
-                code: 200,
-                status: 'Ok',
-                result: {
-                  motos: motos
-                }
-              };
-              res.status(response.code).send(response);
+              httpResponses.ok(res, { motos: motos });
 
-            case 5:
+            case 4:
             case 'end':
               return context$3$0.stop();
           }
@@ -266,14 +256,7 @@ var MotosController = (function () {
                 if (req.query.image == "no") {
                   delete moto.image;
                 }
-                response = {
-                  code: 200,
-                  status: 'Ok',
-                  result: {
-                    moto: moto
-                  }
-                };
-                res.status(response.code).send(response);
+                httpResponses.ok(res, { moto: moto });
               } else {
                 errorResponse = {
                   error: "Mac not found",
@@ -364,7 +347,7 @@ var MotosController = (function () {
               moto = context$3$0.sent;
 
               if (!moto) {
-                context$3$0.next = 23;
+                context$3$0.next = 21;
                 break;
               }
 
@@ -391,40 +374,38 @@ var MotosController = (function () {
               }
               if (req.body.image) {
                 moto.image = req.body.image;
-              }
-              if (req.body.imageEncodeType) {
-                moto.imageEncodeType = req.body.imageEncodeType;
+
+                if (req.body.imageEncodeType) {
+                  moto.imageEncodeType = req.body.imageEncodeType;
+                } else {
+                  moto.imageEncodeType = "base64_default";
+                }
               }
               delete moto._id;
               delete moto.userId;
-              context$3$0.next = 18;
+              context$3$0.next = 17;
               return motosModel.updateMotoByFilter(self.db, filter, moto);
 
-            case 18:
+            case 17:
               result = context$3$0.sent;
 
-              response = {
-                code: 200,
-                status: "Ok"
-              };
-              res.status(response.code).send(response);
-              context$3$0.next = 25;
+              httpResponses.ok(res, {});
+              context$3$0.next = 23;
               break;
 
-            case 23:
+            case 21:
               errorResponse = {
                 error: "Mac not found",
                 description: "This mac doesn't exist"
               };
               httpResponses.notFound(res, errorResponse);
 
-            case 25:
+            case 23:
             case 'end':
               return context$3$0.stop();
           }
         }, callee$2$0, this);
       }))['catch'](function (error) {
-        console.log(error);
         httpResponses.internalServerError(res);
       });
     }
@@ -451,7 +432,7 @@ var MotosController = (function () {
               moto = context$3$0.sent;
 
               if (!moto) {
-                context$3$0.next = 12;
+                context$3$0.next = 11;
                 break;
               }
 
@@ -461,22 +442,60 @@ var MotosController = (function () {
             case 7:
               result = context$3$0.sent;
 
-              response = {
-                code: 200,
-                status: 'Ok'
-              };
-              res.status(response.code).send(response);
-              context$3$0.next = 14;
+              httpResponses.ok(res, {});
+              context$3$0.next = 13;
               break;
 
-            case 12:
+            case 11:
               errorResponse = {
                 error: "Mac not found",
                 description: "This mac doesn't exist"
               };
               httpResponses.notFound(res, errorResponse);
 
-            case 14:
+            case 13:
+            case 'end':
+              return context$3$0.stop();
+          }
+        }, callee$2$0, this);
+      }))['catch'](function (error) {
+        console.log(error);
+        httpResponses.internalServerError(res);
+      });
+    }
+  }, {
+    key: 'getMotoStatusByMac',
+    value: function getMotoStatusByMac(req, res) {
+      console.log("-> callling function getMotoStatusByMac in MotosController");
+      var self = this;
+      var response = undefined;
+      var result = undefined;
+      var errorResponse = undefined;
+      (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+        var filter, moto;
+        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
+          while (1) switch (context$3$0.prev = context$3$0.next) {
+            case 0:
+              filter = {
+                mac: req.params.mac
+              };
+              context$3$0.next = 3;
+              return motosModel.findMotoByFilter(self.db, filter);
+
+            case 3:
+              moto = context$3$0.sent;
+
+              if (moto) {
+                httpResponses.ok(res, { status: moto.status });
+              } else {
+                errorResponse = {
+                  error: "Mac not found",
+                  description: "This mac doesn't exist"
+                };
+                httpResponses.notFound(res, errorResponse);
+              }
+
+            case 5:
             case 'end':
               return context$3$0.stop();
           }
@@ -494,70 +513,71 @@ var MotosController = (function () {
       var response = undefined;
       var result = undefined;
       var errorResponse = undefined;
-      if (req.body.monitoringStatus && req.body.safetyLockStatus && req.body.electricalFlowStatus) {
-        (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
-          var filter, moto, dataToUpdate;
-          return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
-            while (1) switch (context$3$0.prev = context$3$0.next) {
-              case 0:
-                filter = {
-                  mac: req.params.mac
-                };
-                context$3$0.next = 3;
-                return motosModel.findMotoByFilter(self.db, filter);
+      (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+        var filter, moto, dataToUpdate;
+        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
+          while (1) switch (context$3$0.prev = context$3$0.next) {
+            case 0:
+              filter = {
+                mac: req.params.mac
+              };
+              context$3$0.next = 3;
+              return motosModel.findMotoByFilter(self.db, filter);
 
-              case 3:
-                moto = context$3$0.sent;
+            case 3:
+              moto = context$3$0.sent;
 
-                if (!moto) {
-                  context$3$0.next = 13;
-                  break;
-                }
-
-                dataToUpdate = {
-                  status: {
-                    monitoring: req.body.monitoringStatus,
-                    safetyLock: req.body.safetyLockStatus,
-                    electricalFlow: req.body.electricalFlowStatus
-                  }
-                };
-                context$3$0.next = 8;
-                return motosModel.updateMotoByFilter(self.db, filter, dataToUpdate);
-
-              case 8:
-                result = context$3$0.sent;
-
-                response = {
-                  code: 200,
-                  status: "Ok"
-                };
-                res.status(response.code).send(response);
-                context$3$0.next = 15;
+              if (!moto) {
+                context$3$0.next = 17;
                 break;
+              }
 
-              case 13:
-                errorResponse = {
-                  error: "Mac not found",
-                  description: "This mac doesn't exist"
-                };
-                httpResponses.notFound(res, errorResponse);
+              dataToUpdate = {
+                status: moto.status
+              };
 
-              case 15:
-              case 'end':
-                return context$3$0.stop();
-            }
-          }, callee$2$0, this);
-        }))['catch'](function (error) {
-          console.log(error);
-          httpResponses.internalServerError(res);
-        });
-      } else {
-        errorResponse = {
-          error: "Missing parameters",
-          description: "You have to sent the monitoringStatus, safetyLockStatus and the electricalFlowStatus of the moto in the body of the request"
-        };
-        httpResponses.badRequest(res, errorResponse);
-      }
+              if (req.body.monitoringStatus) {
+                dataToUpdate.status["monitoring"] = req.body.monitoringStatus;
+              }
+              if (req.body.safetyLockStatus) {
+                dataToUpdate.status["safetyLock"] = req.body.safetyLockStatus;
+              }
+              if (req.body.electricalFlowStatus) {
+                dataToUpdate.status["electricalFlow"] = req.body.electricalFlowStatus;
+              }
+              if (req.body.parkingLatitude) {
+                dataToUpdate.status["parkingLatitude"] = req.body.parkingLatitude;
+              }
+              if (req.body.parkingLongitude) {
+                dataToUpdate.status["parkingLongitude"] = req.body.parkingLongitude;
+              }
+
+              context$3$0.next = 13;
+              return motosModel.updateMotoByFilter(self.db, filter, dataToUpdate);
+
+            case 13:
+              result = context$3$0.sent;
+
+              httpResponses.ok(res, {});
+              context$3$0.next = 19;
+              break;
+
+            case 17:
+              errorResponse = {
+                error: "Mac not found",
+                description: "This mac doesn't exist"
+              };
+              httpResponses.notFound(res, errorResponse);
+
+            case 19:
+            case 'end':
+              return context$3$0.stop();
+          }
+        }, callee$2$0, this);
+      }))['catch'](function (error) {
+        console.log(error);
+        httpResponses.internalServerError(res);
+      });
     }
   }]);
 

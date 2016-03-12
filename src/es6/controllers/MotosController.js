@@ -45,7 +45,9 @@ export default class MotosController {
             status: {
               monitoring: "off",
               safetyLock: "unlocked",
-              electricalFlow: "unlocked"
+              electricalFlow: "unlocked",
+              parkingLatitude: 0,
+              parkingLongitude: 0
             }
           };
           if(req.body.brand) {
@@ -68,21 +70,16 @@ export default class MotosController {
           }
           if(req.body.image) {
             newMoto.image = req.body.image;
-          }
-          if(req.body.imageEncodeType) {
-            newMoto.imageEncodeType = req.body.imageEncodeType;
+            if(req.body.imageEncodeType) {
+              newMoto.imageEncodeType = req.body.imageEncodeType;
+            }else{
+              newMoto.imageEncodeType = "base64_default";
+            }
           }
           result = yield motosModel.insertMoto(self.db, newMoto);
           let motoInserted = result.ops[0];
           delete motoInserted.image;
-          response = {
-            code: 201,
-            status: 'Created',
-            result: {
-              moto: motoInserted
-            }
-          };
-          res.status(response.code).send(response);
+          httpResponses.created(res, {moto:motoInserted});
         } else {
           errorResponse = {
             error: "Mac already exist",
@@ -138,14 +135,7 @@ export default class MotosController {
     }
     co(function*() {
       let motos = yield motosModel.findMotosByFilter(self.db, filter, projection);
-      response = {
-        code: 200,
-        status: 'Ok',
-        result: {
-          motos: motos
-        }
-      };
-      res.status(response.code).send(response);
+      httpResponses.ok(res, {motos: motos});
     }).catch((error) => {
       console.log(error);
       httpResponses.internalServerError(res);
@@ -166,14 +156,7 @@ export default class MotosController {
         if(req.query.image == "no"){
           delete moto.image;
         }
-        response = {
-          code: 200,
-          status: 'Ok',
-          result: {
-            moto: moto
-          }
-        };
-        res.status(response.code).send(response);
+        httpResponses.ok(res, {moto:moto});
       }else{
         errorResponse = {
           error: "Mac not found",
@@ -254,18 +237,17 @@ export default class MotosController {
         }
         if(req.body.image) {
           moto.image = req.body.image;
-        }
-        if(req.body.imageEncodeType) {
-          moto.imageEncodeType = req.body.imageEncodeType;
+          
+          if(req.body.imageEncodeType) {
+            moto.imageEncodeType = req.body.imageEncodeType;
+          }else{
+            moto.imageEncodeType = "base64_default";
+          }
         }
         delete moto._id;
         delete moto.userId;
         result = yield motosModel.updateMotoByFilter(self.db, filter, moto);
-        response = {
-          code: 200,
-          status: "Ok",
-        };
-        res.status(response.code).send(response);
+        httpResponses.ok(res, {});
       } else {
         errorResponse = {
           error: "Mac not found",
@@ -274,7 +256,6 @@ export default class MotosController {
         httpResponses.notFound(res, errorResponse);
       }
     }).catch((error) => {
-      console.log(error);
       httpResponses.internalServerError(res);
     });
   }
@@ -292,11 +273,7 @@ export default class MotosController {
       let moto = yield motosModel.findMotoByFilter(self.db, filter);
       if (moto) {
         result = yield motosModel.deleteMotoByFilter(self.db, filter);
-        response = {
-          code: 200,
-          status: 'Ok'
-        };
-        res.status(response.code).send(response);
+        httpResponses.ok(res, {});
       } else {
         errorResponse = {
           error: "Mac not found",
@@ -310,51 +287,77 @@ export default class MotosController {
     });
   }
 
+  getMotoStatusByMac(req, res) {
+    console.log("-> callling function getMotoStatusByMac in MotosController"); 
+    let self = this;
+    let response;
+    let result;
+    let errorResponse;
+    co(function*() {
+      let filter = {
+        mac: req.params.mac
+      };
+      let moto = yield motosModel.findMotoByFilter(self.db, filter);
+      if (moto) {
+        httpResponses.ok(res, {status: moto.status});
+      } else {
+        errorResponse = {
+          error: "Mac not found",
+          description: "This mac doesn't exist"
+        };
+        httpResponses.notFound(res, errorResponse);
+      }
+    }).catch((error) => {
+      console.log(error);
+      httpResponses.internalServerError(res);
+    });
+  }
+
+
   updateMotoStatusByMac(req, res) {
     console.log("-> callling function updateUserMotoMonitoringStatusByMac in MotosController"); 
     let self = this;
     let response;
     let result;
     let errorResponse;
-    if(req.body.monitoringStatus && req.body.safetyLockStatus && req.body.electricalFlowStatus){
-      co(function*() {
-        let filter = {
-          mac: req.params.mac
-        };
-        let moto = yield motosModel.findMotoByFilter(self.db, filter);
-        if (moto) {
-          let dataToUpdate = {
-            status: {
-              monitoring: req.body.monitoringStatus,
-              safetyLock: req.body.safetyLockStatus,
-              electricalFlow: req.body.electricalFlowStatus
-            }
-          };
-          result = yield motosModel.updateMotoByFilter(self.db, filter, dataToUpdate);
-          response = {
-            code: 200,
-            status: "Ok",
-          };
-          res.status(response.code).send(response);
-        } else {
-          errorResponse = {
-            error: "Mac not found",
-            description: "This mac doesn't exist"
-          };
-          httpResponses.notFound(res, errorResponse);
-        }
-      }).catch((error) => {
-        console.log(error);
-        httpResponses.internalServerError(res);
-      });
-    }else{
-      errorResponse = {
-        error: "Missing parameters",
-        description: "You have to sent the monitoringStatus, safetyLockStatus and the electricalFlowStatus of the moto in the body of the request"
+    co(function*() {
+      let filter = {
+        mac: req.params.mac
       };
-      httpResponses.badRequest(res, errorResponse);
-    }
+      let moto = yield motosModel.findMotoByFilter(self.db, filter);
+      if (moto) {
+
+        let dataToUpdate = {
+          status: moto.status
+        }
+        if(req.body.monitoringStatus){
+          dataToUpdate.status["monitoring"] = req.body.monitoringStatus;
+        }
+        if(req.body.safetyLockStatus){
+          dataToUpdate.status["safetyLock"] = req.body.safetyLockStatus;
+        }
+        if(req.body.electricalFlowStatus){
+          dataToUpdate.status["electricalFlow"] = req.body.electricalFlowStatus;
+        }
+        if(req.body.parkingLatitude){
+          dataToUpdate.status["parkingLatitude"] = req.body.parkingLatitude;
+        }
+        if(req.body.parkingLongitude){
+          dataToUpdate.status["parkingLongitude"] = req.body.parkingLongitude;
+        }
+
+        result = yield motosModel.updateMotoByFilter(self.db, filter, dataToUpdate);
+        httpResponses.ok(res, {});
+      } else {
+        errorResponse = {
+          error: "Mac not found",
+          description: "This mac doesn't exist"
+        };
+        httpResponses.notFound(res, errorResponse);
+      }
+    }).catch((error) => {
+      console.log(error);
+      httpResponses.internalServerError(res);
+    });
   }
 }
-
-

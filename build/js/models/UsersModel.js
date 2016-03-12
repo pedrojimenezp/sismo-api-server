@@ -32,6 +32,18 @@ var _shortid = require('shortid');
 
 var _shortid2 = _interopRequireDefault(_shortid);
 
+/*
+Users have this info
+
+users = {
+  id: objectId,
+  account: {
+    username: string,
+    password: string
+  }
+}
+*/
+
 function usernameAlreadyExist(db, username) {
   console.log("-> calling function usernameAlreadyExist in UsersModel");
   return new Promise(function (resolve, reject) {
@@ -54,7 +66,7 @@ function findUsers(db) {
   console.log("-> calling function findAllUsers in UsersModel");
   return new Promise(function (resolve, reject) {
     var usersCollection = db.collection('users');
-    usersCollection.find({}, { "account.password": 0, _id: 0 }).toArray(function (error, docs) {
+    usersCollection.find({}, { "account.password": 0 }).toArray(function (error, docs) {
       if (error) {
         reject({ type: _constantsAPIConstants2['default'].DATABASE_ERROR, error: error });
       } else {

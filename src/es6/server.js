@@ -8,6 +8,7 @@ import path from 'path';
 import logger from 'morgan';
 import favicon from 'serve-favicon';
 import cookieParser from 'cookie-parser';
+import session from 'express-session';
 import bodyParser from 'body-parser';
 import swig from 'swig';
 import MongoClient from 'mongodb';
@@ -28,6 +29,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: false }));
 app.use(multipartMiddleware);
+app.use(session({secret: 'secret',cookie: {}}));
 app.use(cookieParser());
 app.use("/static", express.static(path.join(__dirname, '/../../client/static')));
 //app.use('/static', express.static('public'));
@@ -40,8 +42,8 @@ app.engine('html', swig.renderFile);
 app.set('view engine', 'html');
 app.set('views', __dirname + '/../../client/views');
 
-app.set('view cache', false);
-swig.setDefaults({ cache: false });
+app.set('view cache', true);
+swig.setDefaults({ cache: true });
 
 /*
   CONNECT TO RETHINKDB
@@ -59,7 +61,7 @@ let mongodbUrl = 'mongodb://admin:1q2w3e4r@ds031098.mongolab.com:31098/sismo-api
 MongoClient.connect(mongodbUrl, function(error, db) {
   if(error){
     console.log(error);
-    console.log(`Error trying to connect to SisMo database rethinkdb on ${mongodbUrl}`);
+    console.log(`Error trying to connect to SisMo database on ${mongodbUrl}`);
   }else{
     console.log("Connected correctly to server.");
 
@@ -80,5 +82,20 @@ MongoClient.connect(mongodbUrl, function(error, db) {
     });
   }
 });
+/*
+let db;
+new ApiRoutes(app, db);
 
+  let port = process.env.PORT || '4000';
+  app.set('port', port);
 
+  let server = http.createServer(app);
+
+  server.listen(port);
+  server.on('error', function(error) {
+    console.error(error);
+  });
+
+  server.on('listening', function() {
+    console.log(`HTTP server is listening in localhost:${port}`);
+  });*/

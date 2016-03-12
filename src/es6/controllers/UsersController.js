@@ -25,13 +25,8 @@ export default class UsersController {
     let response;
     co(function*() {
       result = yield usersModel.findUsers(self.db);
-      response = {
-        code: 200,
-        users: result
-      };
-      res.status(response.code).send(response);
+      httpResponses.ok(res, {users:result});
     }).catch((error) => {
-      console.log(error);
       httpResponses.internalServerError(res);
     });
   }
@@ -49,14 +44,7 @@ export default class UsersController {
         }
         let userMotos = yield motosModel.findMotosByFilter(self.db, {userId: user._id});
         user.motos = userMotos;
-        response = {
-          code: 200,
-          status: 'Ok',
-          result: {
-            user: user
-          }
-        };
-        res.status(response.code).send(response);
+        httpResponses.ok(res, {user:user});
       } else{
         errorResponse = {
           error: "Username not found",
@@ -97,11 +85,7 @@ export default class UsersController {
           delete userInserted.account.password;
           userInserted.profile = {};
           userInserted.motos = [];
-          response = {
-            code: 201,
-            user: userInserted
-          };
-          res.status(response.code).send(response);
+          httpResponses.created(res, {user:userInserted});
         }
       }).catch((error) => {
         console.log(error);
@@ -113,7 +97,7 @@ export default class UsersController {
   }
 
   login(req, res){
-    console.log("-> callling function createToken in TokensController");
+    console.log("-> callling function login in UsersController");
     let self = this;
     let response;
     let result;
@@ -132,10 +116,7 @@ export default class UsersController {
               console.log(user);
               if (user && user.account.password === password) {
                 delete user.account.password;
-                response = {
-                  user: user
-                };
-                httpResponses.Ok(res, response);
+                httpResponses.ok(res, {user:user});
               } else {
                 errorResponse = {
                   error: "Wrong username or password",
@@ -173,6 +154,44 @@ export default class UsersController {
         description: "To login you must to use the Basic authentication it means send username:password with base64 codification in the authentication header with Basic flag"
       }
       httpResponses.badRequest(res, errorResponse);
+    }
+  }
+
+  login2(req, res){
+    console.log("-> callling function login2 in UsersController");
+    console.log(req.body);
+    let self = this;
+    let response;
+    let result;
+    let errorResponse;
+    if(req.body.username && req.body.password){
+      let username = req.body.username;
+      let password = req.body.password;
+      co(function*() {
+        let user = yield usersModel.findUserByFilter(self.db, {'account.username': username});
+        console.log(user);
+        if (user && user.account.password === password) {
+          if(req.body.rememberMe === "on"){
+            res.cookie("isLogged",true);
+            res.cookie("username",user.account.username);
+            res.cookie("userId", user._id);
+            console.log("Gurdado en cookies")
+          }else{
+            req.session["isLogged"] = true;
+            req.session["username"] = user.account.username;
+            req.session["userId"] = user._id;
+            console.log("Gurdado en sessions")
+          }
+          res.redirect('/'+user.account.username+"/motos"); 
+        } else {
+          res.redirect('/signin?loginIncorrect=true&username='+req.body.username);
+        }
+      }).catch((error) => {
+        console.log(error);
+        res.redirect('/error');
+      });
+    }else{
+      res.redirect('/signin?loginIncorrect=true&username='+req.body.username);
     }
   }
 }

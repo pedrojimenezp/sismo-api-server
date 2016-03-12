@@ -4,6 +4,17 @@ import polyfill from 'babel/polyfill';
 import config from '../config/config';
 import shortid  from 'shortid';
 
+/*
+Users have this info
+
+users = {
+  id: objectId,
+  account: {
+    username: string,
+    password: string
+  }
+}
+*/
 export function usernameAlreadyExist(db, username) {
   console.log("-> calling function usernameAlreadyExist in UsersModel");
   return new Promise((resolve, reject) => {
@@ -26,7 +37,7 @@ export function findUsers(db) {
   console.log("-> calling function findAllUsers in UsersModel");
   return new Promise((resolve, reject) => {
     let usersCollection = db.collection('users');
-    usersCollection.find({},{"account.password":0, _id:0}).toArray((error, docs) => {
+    usersCollection.find({},{"account.password":0}).toArray((error, docs) => {
       if(error){
         reject({type: APIConstants.DATABASE_ERROR, error: error});
       }else{

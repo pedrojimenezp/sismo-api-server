@@ -80,19 +80,14 @@ var UsersController = (function () {
             case 2:
               result = context$3$0.sent;
 
-              response = {
-                code: 200,
-                users: result
-              };
-              res.status(response.code).send(response);
+              httpResponses.ok(res, { users: result });
 
-            case 5:
+            case 4:
             case 'end':
               return context$3$0.stop();
           }
         }, callee$2$0, this);
       }))['catch'](function (error) {
-        console.log(error);
         httpResponses.internalServerError(res);
       });
     }
@@ -115,7 +110,7 @@ var UsersController = (function () {
               user = context$3$0.sent;
 
               if (!user) {
-                context$3$0.next = 13;
+                context$3$0.next = 12;
                 break;
               }
 
@@ -129,25 +124,18 @@ var UsersController = (function () {
               userMotos = context$3$0.sent;
 
               user.motos = userMotos;
-              response = {
-                code: 200,
-                status: 'Ok',
-                result: {
-                  user: user
-                }
-              };
-              res.status(response.code).send(response);
-              context$3$0.next = 15;
+              httpResponses.ok(res, { user: user });
+              context$3$0.next = 14;
               break;
 
-            case 13:
+            case 12:
               errorResponse = {
                 error: "Username not found",
                 description: "The username you sent in the url doesn't exist in our db"
               };
               httpResponses.notFound(res, "Username not found");
 
-            case 15:
+            case 14:
             case 'end':
               return context$3$0.stop();
           }
@@ -187,7 +175,7 @@ var UsersController = (function () {
                   description: "The the username you want to register is already registered in our db, you have to send another"
                 };
                 httpResponses.conflict(res, errorResponse);
-                context$3$0.next = 18;
+                context$3$0.next = 17;
                 break;
 
               case 8:
@@ -207,13 +195,9 @@ var UsersController = (function () {
                 delete userInserted.account.password;
                 userInserted.profile = {};
                 userInserted.motos = [];
-                response = {
-                  code: 201,
-                  user: userInserted
-                };
-                res.status(response.code).send(response);
+                httpResponses.created(res, { user: userInserted });
 
-              case 18:
+              case 17:
               case 'end':
                 return context$3$0.stop();
             }
@@ -229,7 +213,7 @@ var UsersController = (function () {
   }, {
     key: 'login',
     value: function login(req, res) {
-      console.log("-> callling function createToken in TokensController");
+      console.log("-> callling function login in UsersController");
       var self = this;
       var response = undefined;
       var result = undefined;
@@ -258,10 +242,7 @@ var UsersController = (function () {
                         console.log(user);
                         if (user && user.account.password === password) {
                           delete user.account.password;
-                          response = {
-                            user: user
-                          };
-                          httpResponses.Ok(res, response);
+                          httpResponses.ok(res, { user: user });
                         } else {
                           errorResponse = {
                             error: "Wrong username or password",
@@ -306,6 +287,62 @@ var UsersController = (function () {
           description: "To login you must to use the Basic authentication it means send username:password with base64 codification in the authentication header with Basic flag"
         };
         httpResponses.badRequest(res, errorResponse);
+      }
+    }
+  }, {
+    key: 'login2',
+    value: function login2(req, res) {
+      console.log("-> callling function login2 in UsersController");
+      console.log(req.body);
+      var self = this;
+      var response = undefined;
+      var result = undefined;
+      var errorResponse = undefined;
+      if (req.body.username && req.body.password) {
+        (function () {
+          var username = req.body.username;
+          var password = req.body.password;
+          (0, _co2['default'])(regeneratorRuntime.mark(function callee$3$0() {
+            var user;
+            return regeneratorRuntime.wrap(function callee$3$0$(context$4$0) {
+              while (1) switch (context$4$0.prev = context$4$0.next) {
+                case 0:
+                  context$4$0.next = 2;
+                  return usersModel.findUserByFilter(self.db, { 'account.username': username });
+
+                case 2:
+                  user = context$4$0.sent;
+
+                  console.log(user);
+                  if (user && user.account.password === password) {
+                    if (req.body.rememberMe === "on") {
+                      res.cookie("isLogged", true);
+                      res.cookie("username", user.account.username);
+                      res.cookie("userId", user._id);
+                      console.log("Gurdado en cookies");
+                    } else {
+                      req.session["isLogged"] = true;
+                      req.session["username"] = user.account.username;
+                      req.session["userId"] = user._id;
+                      console.log("Gurdado en sessions");
+                    }
+                    res.redirect('/' + user.account.username + "/motos");
+                  } else {
+                    res.redirect('/signin?loginIncorrect=true&username=' + req.body.username);
+                  }
+
+                case 5:
+                case 'end':
+                  return context$4$0.stop();
+              }
+            }, callee$3$0, this);
+          }))['catch'](function (error) {
+            console.log(error);
+            res.redirect('/error');
+          });
+        })();
+      } else {
+        res.redirect('/signin?loginIncorrect=true&username=' + req.body.username);
       }
     }
   }]);

@@ -23,10 +23,8 @@ motos = {
     monitoring: string,
     electricalFlow: string,
     safetyLock: string,
-    parkingLocation: {
-      latitude: string,
-      longitude: string
-    }
+    parkingLatitude: double,
+    parkingLatitude: double
   }
 }
 */
